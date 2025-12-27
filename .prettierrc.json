@@ -1,0 +1,15 @@
+{
+  "semi": true,
+  "singleQuote": false,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "printWidth": 79,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "plugins": [
+    "prettier-plugin-jsdoc"
+  ],
+  "jsdocWrapComment": true,
+  "jsdocPrintWidth": 79,
+  "endOfLine": "lf"
+}

@@ -1,0 +1,13 @@
+{
+  "files.eol": "\n",
+  "editor.formatOnSave": true,
+  "eslint.useFlatConfig": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always",
+    "source.organizeImports": "always"
+  },
+  "cSpell.words": [
+    "treeify"
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib",
+}

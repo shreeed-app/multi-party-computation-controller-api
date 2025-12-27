@@ -1,0 +1,14 @@
+[
+    {
+        "id": "1",
+        "internalBaseUrl": "http://vault:8200"
+    },
+    {
+        "id": "2",
+        "internalBaseUrl": "http://vault:8200"
+    },
+    {
+        "id": "3",
+        "internalBaseUrl": "http://vault:8200"
+    }
+]
