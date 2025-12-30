@@ -1,91 +1,103 @@
 # Multi-Party Computation Signer API
 
-This document describes the architecture and workflow of a Multi-Party Computation (MPC) Signer API that enables secure key management and signing operations using distributed peers. The system leverages a bootstrap API, a worker process, and multiple peers that hold shares of cryptographic keys.
+This document describes the sequence diagrams for the key shares management and signing process in a Multi-Party Computation (MPC) Signer API system.
 
-## Shares management
+## Compatibility
 
-Each peer in the mesh holds a unique share of the cryptographic key, managed securely within its own Vault instance. The bootstrap worker coordinates signing requests by communicating with the peers to obtain partial signatures.
+| OS                 | Status |
+| ------------------ | ------ |
+| macOS              | ✅     |
+| Linux              | ✅     |
+| Windows (via WSL2) | ✅     |
+| Native Windows     | ✅     |
+
+## Prerequisites
+
+- [Docker](https://www.docker.com) and Docker Compose
+- [Node.js](https://nodejs.org)
+
+### Shares management
+
+The shares management process involves distributing encrypted key shares to multiple peers for secure storage. Each peer is responsible for decrypting and storing its share in a secure vault.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant Client
-    participant API as Bootstrap API
-    participant Queue as Redis Queue
-    participant Worker as Bootstrap Worker
-    participant FirstPeer as Peer #1
-    participant SecondPeer as Peer #2
-    participant ThirdPeer as Peer #3
+    
+    box Orchestrator
+        participant API
+    end
+    
+    box Peers
+        participant FirstPeer as Peer 1
+        participant SecondPeer as Peer 2
+        participant NPeer as Peer 3..N
+    end
 
-    Client->>API: POST /keys/...
-    API->>Queue: Enqueue job
+    Client->>API: POST /keys/new (encrypted)
     API-->>Client: 202 Accepted
 
-    Queue->>Worker: Dequeue job
-    Worker->>FirstPeer: Send key share #1
-    Worker->>SecondPeer: Send key share #2
-    Worker->>ThirdPeer: Send key share #3
+    API->>FirstPeer: Send key share #1
+    API->>SecondPeer: Send key share #2
+    API->>NPeer: Send key share #3..N
 
-    FirstPeer-->>Worker: ACK (stored in Vault)
-    SecondPeer-->>Worker: ACK (stored in Vault)
-    ThirdPeer-->>Worker: ACK (stored in Vault)
+    FirstPeer-->>API: ACK (decrypted and stored in Vault)
+    SecondPeer-->>API: ACK (decrypted and stored in Vault)
+    NPeer-->>API: ACK (decrypted and stored in Vault)
 
-    Worker->>API: Key creation complete
     API-->>Client: 200 OK
 ```
 
-## Signing process
+### Signing process
 
-The signing process involves coordinating multiple peers to generate a valid signature without any single peer having access to the complete private key.
+The signing process involves coordinating multiple peers to collaboratively generate a digital signature without exposing the private key. The orchestrator API receives signing requests, enqueues them for processing, and the worker interacts with the peers to perform the signing operation.
 
 ```mermaid
 sequenceDiagram
     autonumber
 
     participant Client
-    participant API as Bootstrap API
-    participant Queue as Redis Queue
-    participant Worker as Bootstrap Worker
-    participant FirstPeer as Peer #1
-    participant SecondPeer as Peer #2
-    participant ThirdPeer as Peer #3
 
-    %% Public API
+    box Orchestrator
+        participant API
+        participant Queue
+        participant Worker
+    end
+
+    box Peers
+        participant FirstPeer as Peer 1
+        participant SecondPeer as Peer 2
+        participant NPeer as Peer 3..N
+    end
+
     Client->>API: POST /sign
     API->>Queue: Enqueue signing job
     API-->>Client: 202 Accepted
 
-    %% Worker orchestration
     Queue->>Worker: Dequeue signing job
 
-    Worker->>FirstPeer: Start signing session by sending digest
-    Worker->>SecondPeer: Start signing session by sending digest
-    Worker->>ThirdPeer: Start signing session by sending digest
+    Worker->>FirstPeer: Start session
+    Worker->>SecondPeer: Start session
+    Worker->>NPeer: Start session
 
-    FirstPeer->>FirstPeer: Generate a random nonce share locally
-    SecondPeer->>SecondPeer: Generate a random nonce share locally
-    ThirdPeer->>ThirdPeer: Generate a random nonce share locally
+    Note right of Worker: Select quorum t-of-N (N ≥ 3)
+    loop Rounds
+        FirstPeer-->>Worker: Round N message
+        SecondPeer-->>Worker: Round N message
+        NPeer-->>Worker: Round N message
 
-    FirstPeer-->>Worker: Send public nonce commitment
-    SecondPeer-->>Worker: Send public nonce commitment
-    ThirdPeer-->>Worker: Send public nonce commitment
+        Worker->>FirstPeer: Forward aggregated Round N messages
+        Worker->>SecondPeer: Forward aggregated Round N messages
+        Worker->>NPeer: Forward aggregated Round N messages
+    end
 
-    Worker->>Worker: Combine all nonce commitments into one global nonce
-    Worker->>Worker: Derive the public challenge from the global nonce
+    FirstPeer-->>Worker: Final contribution
+    SecondPeer-->>Worker: Final contribution
+    NPeer-->>Worker: Final contribution
 
-    Worker->>FirstPeer: Broadcast derived challenge
-    Worker->>SecondPeer: Broadcast derived challenge
-    Worker->>ThirdPeer: Broadcast derived challenge
-
-    FirstPeer->>FirstPeer: Compute partial signature
-    SecondPeer->>SecondPeer: Compute partial signature
-    ThirdPeer->>ThirdPeer: Compute partial signature
-
-    FirstPeer-->>Worker: Send partial signature
-    SecondPeer-->>Worker: Send partial signature
-    ThirdPeer-->>Worker: Send partial signature
-
-    Worker->>Worker: Aggregate partial signatures into final signature
-    Worker->>API: Return final signature
+    Worker->>Worker: Aggregate final signature
+    Worker->>API: Return signature
     API-->>Client: 200 OK
+
 ```
