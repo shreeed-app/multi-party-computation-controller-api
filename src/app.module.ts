@@ -5,7 +5,7 @@ import { AppConfigModule } from "@/common/config/config.module";
 import Mode from "@/common/constants/mode";
 import { InternalModule } from "@/private/private.module";
 import { PublicModule } from "@/public/public.module";
-import { KeysModule } from "@/services/key/keys.module";
+import { KeysModule } from "@/services/keys/keys.module";
 import { NodesModule } from "@/services/node/node.module";
 
 const mode: Mode | undefined = process.env[
@@ -19,6 +19,6 @@ const mode: Mode | undefined = process.env[
     ...(mode === Mode.Peer ? [InternalModule, KeysModule] : []),
   ],
 })
-class AppModule { }
+class AppModule {}
 
 export { AppModule };

@@ -15,6 +15,8 @@ This document describes the sequence diagrams for the key shares management and 
 
 - [Docker](https://www.docker.com) and Docker Compose
 - [Node.js](https://nodejs.org)
+- [Bun](https://bun.sh)
+- [Act](https://github.com/nektos/act) for local GitHub Actions testing
 
 ### Shares management
 
