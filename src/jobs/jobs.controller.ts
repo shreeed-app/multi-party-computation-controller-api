@@ -6,6 +6,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Logger,
   Param,
   ParseUUIDPipe,
   UseGuards,
@@ -34,6 +35,8 @@ import {
 @UseGuards(BearerGuard)
 @Controller(Endpoint.JOBS)
 class JobsController {
+  private readonly logger: Logger = new Logger(JobsController.name);
+
   constructor(private readonly jobsService: JobsService) {}
 
   /**
@@ -51,10 +54,21 @@ class JobsController {
     description: "Unauthorized.",
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: "Job not found." })
+  @ApiResponse({
+    status: 429,
+    description: "Too Many Requests.",
+  })
   async getJobStatus(
     @Param("jobId", new ParseUUIDPipe()) jobId: string,
   ): Promise<JobStatusResponse> {
-    return this.jobsService.getJobStatus(jobId);
+    this.logger.debug(`GET /jobs/${jobId}`);
+
+    const result: JobStatusResponse =
+      await this.jobsService.getJobStatus(jobId);
+
+    this.logger.debug(`Job status — ${JSON.stringify(result)}`);
+
+    return result;
   }
 }
 

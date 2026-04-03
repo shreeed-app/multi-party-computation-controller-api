@@ -36,7 +36,6 @@ class ThresholdWithinParticipants implements ValidatorConstraintInterface {
     return dto.participants === undefined || threshold <= dto.participants;
   }
 
-
   /**
    * @returns {string} The default validation failure message.
    */

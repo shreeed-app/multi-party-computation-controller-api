@@ -1,7 +1,8 @@
 import { AppConfigService } from "@/common/config/config.service";
 import { type Metadata } from "@/metadata/metadata.types";
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
 import Redis from "ioredis";
+import { ResultAsync } from "neverthrow";
 
 /**
  * Redis key prefix used to namespace metadata entries. Prevents collisions
@@ -28,6 +29,7 @@ const METADATA_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days.
  */
 @Injectable()
 class MetadataService implements OnModuleDestroy {
+  private readonly logger = new Logger(MetadataService.name);
   private readonly redis: Redis;
 
   constructor(private readonly configService: AppConfigService) {
@@ -42,7 +44,7 @@ class MetadataService implements OnModuleDestroy {
     });
     // Prevent unhandled error events from crashing the process.
     this.redis.on("error", (error: Error) => {
-      console.error("[MetadataService] Redis error:", error.message);
+      this.logger.error("Redis connection error", error.message);
     });
   }
 
@@ -73,22 +75,28 @@ class MetadataService implements OnModuleDestroy {
    *
    * @param {string} keyIdentifier - Application-assigned stable key
    *   identifier.
-   * @returns {Promise<Metadata | null>} The stored `Metadata`, or `null` if
-   *   not found or expired.
+   * @returns {ResultAsync<Metadata | null, Error>} The stored `Metadata`, or
+   *   `null` if not found or expired. Errors when the stored value cannot be
+   *   parsed (corrupted entry).
    */
-  async retrieve(keyIdentifier: string): Promise<Metadata | null> {
+  retrieve(keyIdentifier: string): ResultAsync<Metadata | null, Error> {
     const redisKey: string = `${METADATA_REDIS_PREFIX}:${keyIdentifier}`;
-    const serialized: string | null = await this.redis.get(redisKey);
-    if (!serialized) return null;
-
-    try {
-      return JSON.parse(serialized) as Metadata;
-    } catch {
-      throw new Error(
-        `Corrupted metadata for '${keyIdentifier}'. ` +
-          `Delete and re-run key generation.`,
-      );
-    }
+    return ResultAsync.fromPromise(
+      this.redis.get(redisKey).then((serialized) => {
+        if (!serialized) return null;
+        return JSON.parse(serialized) as Metadata;
+      }),
+      (cause) => {
+        this.logger.error(
+          `Corrupted metadata for key identifier '${keyIdentifier}' — value cannot be parsed as JSON`,
+        );
+        return new Error(
+          `Corrupted metadata for '${keyIdentifier}'. ` +
+            `Delete and re-run key generation.`,
+          { cause },
+        );
+      },
+    );
   }
 
   /**

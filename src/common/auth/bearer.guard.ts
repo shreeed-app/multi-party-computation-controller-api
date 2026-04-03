@@ -5,6 +5,7 @@ import {
   type CanActivate,
   type ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from "@nestjs/common";
 import { timingSafeEqual } from "crypto";
@@ -21,6 +22,8 @@ import { timingSafeEqual } from "crypto";
  */
 @Injectable()
 class BearerGuard implements CanActivate {
+  private readonly logger: Logger = new Logger(BearerGuard.name);
+
   constructor(private readonly configService: AppConfigService) {}
 
   /**
@@ -47,12 +50,14 @@ class BearerGuard implements CanActivate {
           ] ?? null);
 
     if (!authorizationHeader) {
+      this.logger.warn("Rejected request: missing Authorization header.");
       throw new UnauthorizedException(Message.MISSING_AUTH_HEADER);
     }
 
     const [scheme, token]: string[] = authorizationHeader.split(" ");
 
     if (scheme?.toLowerCase() !== AuthScheme.BEARER || !token) {
+      this.logger.warn("Rejected request: invalid Authorization scheme.");
       throw new UnauthorizedException(Message.INVALID_AUTH_SCHEME);
     }
 
@@ -60,6 +65,7 @@ class BearerGuard implements CanActivate {
 
     // Prevent token length from leaking information.
     if (token.length !== expectedToken.length) {
+      this.logger.warn("Rejected request: invalid Bearer token.");
       throw new UnauthorizedException(Message.INVALID_BEARER_TOKEN);
     }
 
@@ -67,6 +73,7 @@ class BearerGuard implements CanActivate {
     const expectedBuffer: Buffer = Buffer.from(expectedToken);
 
     if (!timingSafeEqual(tokenBuffer, expectedBuffer)) {
+      this.logger.warn("Rejected request: invalid Bearer token.");
       throw new UnauthorizedException(Message.INVALID_BEARER_TOKEN);
     }
 

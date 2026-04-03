@@ -8,7 +8,7 @@ import {
 } from "@/jobs/jobs.types";
 import { QueueName } from "@/queue/queue.constants";
 import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { type Job, type JobState, type Queue } from "bullmq";
 
 /**
@@ -20,6 +20,8 @@ import { type Job, type JobState, type Queue } from "bullmq";
  */
 @Injectable()
 class JobsService {
+  private readonly logger: Logger = new Logger(JobsService.name);
+
   constructor(
     @InjectQueue(QueueName.KEY_GENERATION)
     private readonly keyGenerationQueue: Queue,
@@ -74,7 +76,10 @@ class JobsService {
       job.finishedOn ?? job.processedOn ?? job.timestamp,
     ).toISOString();
 
-    if (!job.id) throw new Error("Job is missing its identifier.");
+    if (!job.id) {
+      this.logger.error("BullMQ returned a job without an identifier.");
+      throw new Error("Job is missing its identifier.");
+    }
 
     return {
       jobId: job.id,
@@ -99,10 +104,11 @@ class JobsService {
    * @throws {Error} When the return value is not a valid object.
    */
   private validateJobResult(value: unknown): JobResult {
-    if (typeof value !== "object" || value === null) {
-      throw new Error("Job completed with an invalid result.");
-    }
-    return value as JobResult;
+    if (typeof value === "object" && value !== null) return value as JobResult;
+    this.logger.error(
+      `Job completed with an invalid result: ${JSON.stringify(value)}`,
+    );
+    throw new Error("Job completed with an invalid result.");
   }
 
   /**

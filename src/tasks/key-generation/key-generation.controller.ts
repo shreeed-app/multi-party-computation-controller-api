@@ -10,6 +10,7 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -34,6 +35,8 @@ import {
 @UseGuards(BearerGuard)
 @Controller(Endpoint.KEY_GENERATION)
 class KeyGenerationController {
+  private readonly logger: Logger = new Logger(KeyGenerationController.name);
+
   constructor(private readonly keyGenerationService: KeyGenerationService) {}
 
   /**
@@ -55,10 +58,21 @@ class KeyGenerationController {
     status: HttpStatus.UNAUTHORIZED,
     description: "Unauthorized.",
   })
+  @ApiResponse({
+    status: 429,
+    description: "Too Many Requests.",
+  })
   async enqueueKeyGeneration(
     @Body() dto: KeyGenerationRequestDto,
   ): Promise<KeyGenerationResponseDto> {
-    return this.keyGenerationService.enqueue(dto);
+    this.logger.log(`POST /key-generation — ${JSON.stringify(dto)}`);
+
+    const result: KeyGenerationResponseDto =
+      await this.keyGenerationService.enqueue(dto);
+
+    this.logger.log(`Key generation job enqueued — ${JSON.stringify(result)}`);
+
+    return result;
   }
 }
 
