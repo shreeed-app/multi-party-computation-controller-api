@@ -1,15 +1,15 @@
-# Multi-Party Computation Signer API
+# Multi-Party Computation Controller API
 
-This document describes the sequence diagrams for the key shares management and signing process in a Multi-Party Computation (MPC) Signer API system.
+NestJS HTTP API for the multi-party computation controller. Exposes key generation and threshold signing endpoints, enqueues jobs via BullMQ, and dispatches them to the cryptographic engine over gRPC. Clients poll for job completion.
 
 ## Compatibility
 
 | OS                 | Status |
 | ------------------ | ------ |
-| macOS              | ✅     |
-| Linux              | ✅     |
-| Windows (via WSL2) | ✅     |
-| Native Windows     | ✅     |
+| macOS              | ✅      |
+| Linux              | ✅      |
+| Windows (via WSL2) | ✅      |
+| Native Windows     | ✅      |
 
 ## Prerequisites
 
@@ -18,88 +18,70 @@ This document describes the sequence diagrams for the key shares management and 
 - [Bun](https://bun.sh)
 - [Act](https://github.com/nektos/act) for local GitHub Actions testing
 
-### Shares management
+### Key generation
 
-The shares management process involves distributing encrypted key shares to multiple peers for secure storage. Each peer is responsible for decrypting and storing its share in a secure vault.
+The client submits a key generation request. The API enqueues the job and returns a job ID immediately. The worker calls the Rust engine via gRPC, which coordinates the multi-party computation protocol across nodes. On completion the public key and key package are stored in Redis and exposed through the polling endpoint.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant Client
-    
-    box Orchestrator
-        participant API
-    end
-    
-    box Peers
-        participant FirstPeer as Peer 1
-        participant SecondPeer as Peer 2
-        participant NPeer as Peer 3..N
-    end
 
-    Client->>API: POST /keys/new (encrypted)
-    API-->>Client: 202 Accepted
-
-    API->>FirstPeer: Send key share #1
-    API->>SecondPeer: Send key share #2
-    API->>NPeer: Send key share #3..N
-
-    FirstPeer-->>API: ACK (decrypted and stored in Vault)
-    SecondPeer-->>API: ACK (decrypted and stored in Vault)
-    NPeer-->>API: ACK (decrypted and stored in Vault)
-
-    API-->>Client: 200 OK
-```
-
-### Signing process
-
-The signing process involves coordinating multiple peers to collaboratively generate a digital signature without exposing the private key. The orchestrator API receives signing requests, enqueues them for processing, and the worker interacts with the peers to perform the signing operation.
-
-```mermaid
-sequenceDiagram
-    autonumber
-
-    participant Client
-
-    box Orchestrator
-        participant API
+    box API
+        participant HTTP
         participant Queue
         participant Worker
     end
 
-    box Peers
-        participant FirstPeer as Peer 1
-        participant SecondPeer as Peer 2
-        participant NPeer as Peer 3..N
+    participant Redis
+    participant Engine as Cryptographic engine
+
+    Client->>HTTP: POST /key-generation
+    HTTP->>Queue: Enqueue job
+    HTTP-->>Client: 202 Accepted { jobId }
+
+    Queue->>Worker: Dequeue job
+    Worker->>Engine: GenerateKey RPC
+    Engine-->>Worker: { publicKey, publicKeyPackage }
+
+    Worker->>Redis: Store key metadata
+    Worker->>Queue: Mark job completed
+
+    Client->>HTTP: GET /jobs/:jobId
+    HTTP-->>Client: 200 OK { status: "completed", result: { publicKey, publicKeyPackage } }
+```
+
+### Signing
+
+The client submits a signing request referencing a previously generated key. The worker retrieves the key metadata from Redis, then calls the Rust engine to produce a threshold signature. The client polls until the job completes.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client
+
+    box API
+        participant HTTP
+        participant Queue
+        participant Worker
     end
 
-    Client->>API: POST /sign
-    API->>Queue: Enqueue signing job
-    API-->>Client: 202 Accepted
+    participant Redis
+    participant Engine as Cryptographic engine
 
-    Queue->>Worker: Dequeue signing job
+    Client->>HTTP: POST /signing { keyIdentifier, message }
+    HTTP->>Queue: Enqueue job
+    HTTP-->>Client: 202 Accepted { jobId }
 
-    Worker->>FirstPeer: Start session
-    Worker->>SecondPeer: Start session
-    Worker->>NPeer: Start session
+    Queue->>Worker: Dequeue job
+    Worker->>Redis: Retrieve key metadata
+    Redis-->>Worker: { publicKeyPackage, algorithm, threshold, participants }
 
-    Note right of Worker: Select quorum t-of-N (N ≥ 3)
-    loop Rounds
-        FirstPeer-->>Worker: Round N message
-        SecondPeer-->>Worker: Round N message
-        NPeer-->>Worker: Round N message
+    Worker->>Engine: Sign RPC
+    Engine-->>Worker: { signature }
 
-        Worker->>FirstPeer: Forward aggregated Round N messages
-        Worker->>SecondPeer: Forward aggregated Round N messages
-        Worker->>NPeer: Forward aggregated Round N messages
-    end
+    Worker->>Queue: Mark job completed
 
-    FirstPeer-->>Worker: Final contribution
-    SecondPeer-->>Worker: Final contribution
-    NPeer-->>Worker: Final contribution
-
-    Worker->>Worker: Aggregate final signature
-    Worker->>API: Return signature
-    API-->>Client: 200 OK
-
+    Client->>HTTP: GET /jobs/:jobId
+    HTTP-->>Client: 200 OK { status: "completed", result: { signature } }
 ```

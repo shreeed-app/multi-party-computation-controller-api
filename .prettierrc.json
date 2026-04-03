@@ -10,6 +10,8 @@
     "prettier-plugin-jsdoc"
   ],
   "jsdocWrapComment": true,
+  "jsdocCommentLineStrategy": "keep",
+  "proseWrap": "always",
   "jsdocPrintWidth": 79,
   "endOfLine": "lf"
 }

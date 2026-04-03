@@ -7,7 +7,21 @@
     "source.organizeImports": "always"
   },
   "cSpell.words": [
+    "appendonly",
+    "autonumber",
+    "bullmq",
+    "catthehacker",
+    "cggmp",
+    "healthcheck",
+    "neverthrow",
+    "noexec",
+    "nosuid",
+    "oneofs",
+    "schnorr",
+    "secp",
+    "solana",
+    "tmpfs",
     "treeify"
   ],
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "js/ts.tsdk.path": "node_modules/typescript/lib"
 }

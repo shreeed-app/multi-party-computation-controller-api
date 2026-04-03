@@ -5,38 +5,34 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  ci:
-    name: Continuous integration
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
-      - name: Cache Bun
+      - name: Restore Bun cache
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: |
             bun-${{ runner.os }}-
-
-      - name: Cache Jest
-        uses: actions/cache@v4
-        with:
-          path: |
-            .jest-cache
-            coverage
-          key: jest-${{ runner.os }}-${{ github.ref }}-${{ github.sha }}
-          restore-keys: |
-            jest-${{ runner.os }}-${{ github.ref }}-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -44,47 +40,79 @@ jobs:
       - name: Lint
         run: bun run lint
 
-      - name: Unit tests (bootstrap)
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Restore Bun cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run unit tests
         env:
           NODE_ENV: test
-          APPLICATION_MODE: bootstrap
-          JEST_CACHE_DIRECTORY: .jest-cache
         run: bun run test
 
-      - name: Test coverage (peer)
-        env:
-          NODE_ENV: test
-          APPLICATION_MODE: peer
-          JEST_CACHE_DIRECTORY: .jest-cache
-        run: bun run test:coverage
+  test-e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Test coverage (bootstrap)
-        env:
-          NODE_ENV: test
-          APPLICATION_MODE: bootstrap
-          JEST_CACHE_DIRECTORY: .jest-cache
-        run: bun run test:coverage
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
-      - name: Unit tests (peer)
-        env:
-          NODE_ENV: test
-          APPLICATION_MODE: peer
-          JEST_CACHE_DIRECTORY: .jest-cache
-        run: bun run test
+      - name: Restore Bun cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
 
-      - name: E2E tests (bootstrap)
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run end-to-end tests
         env:
           NODE_ENV: test
-          APPLICATION_MODE: bootstrap
-          JEST_CACHE_DIRECTORY: .jest-cache
         run: bun run test:e2e
 
-      - name: E2E tests (peer)
-        env:
-          NODE_ENV: test
-          APPLICATION_MODE: peer
-          JEST_CACHE_DIRECTORY: .jest-cache
-        run: bun run test:e2e
+  build:
+    name: Build
+    needs: [lint, test, test-e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Restore Bun cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Build
         run: bun run build

@@ -1,26 +1,15 @@
-/** Utility class for managing and formatting addresses. */
+/** Utility class for building address strings. */
 class AddressManager {
   /**
-   * Convert a host and port into an address string.
+   * Combines a host and a port into a `host:port` address string.
    *
-   * @param {string} host - The host name or IP address.
-   * @param {number} port - The port number.
-   * @returns {string} The combined address in the format "host:port".
+   * @param {string} host - Hostname or IP address.
+   * @param {number} port - Port number.
+   * @returns {string} The combined address in `"host:port"` format.
    */
   public static toAddress(host: string, port: number): string {
     return `${host}:${port}`;
   }
-
-  /**
-   * Create a path address by joining multiple path segments.
-   *
-   * @param {...string[]} path - The path segments to join.
-   * @returns {string} The joined path address.
-   */
-  public static createPathAddress(...path: string[]): string {
-    return path.join("/");
-  }
 }
 
-export default AddressManager;
 export { AddressManager };

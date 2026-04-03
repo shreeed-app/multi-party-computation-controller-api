@@ -1,37 +1,16 @@
-/** Endpoints constants of the application APIs. */
+/**
+ * HTTP route prefix constants. Declared here so that controllers and tests
+ * reference a single source of truth rather than duplicating literal strings.
+ */
 class Endpoint {
-  // Public API endpoints.
-  public static readonly KEYS = "/v1/keys";
+  /** Route prefix for distributed key-generation operations. */
+  public static readonly KEY_GENERATION = "/key-generation";
 
-  // Internal/private API endpoints.
-  public static readonly INTERNAL_KEYS = "/internal/keys";
-  public static readonly INTERNAL_KEYS_SHARE = Endpoint.combine(
-    Endpoint.INTERNAL_KEYS,
-    "share",
-  );
-  public static readonly INTERNAL_SIGN = "/internal/sign";
+  /** Route prefix for threshold-signature operations. */
+  public static readonly SIGNING = "/signing";
 
-  /**
-   * Combines multiple endpoint segments into a single endpoint string.
-   *
-   * @param {...string[]} endpoints - The endpoint segments to combine.
-   * @returns {string} The combined endpoint string.
-   */
-  public static combine(...endpoints: string[]): string {
-    return endpoints.join("/");
-  }
-
-  /**
-   * Retrieves the last segment of a given endpoint.
-   *
-   * @param {string} endpoint - The endpoint string.
-   * @returns {string} The last segment of the endpoint.
-   */
-  public static lastSegment(endpoint: string): string {
-    const segments: string[] = endpoint.split("/");
-    return segments[segments.length - 1];
-  }
+  /** Route prefix for job-status polling. */
+  public static readonly JOBS = "/jobs";
 }
 
-export default Endpoint;
 export { Endpoint };
