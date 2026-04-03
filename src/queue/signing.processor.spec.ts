@@ -1,7 +1,3 @@
-import { NotFoundException } from "@nestjs/common";
-import { type Job } from "bullmq";
-import { errAsync, okAsync } from "neverthrow";
-
 import { Message } from "@/common/constants/message";
 import { GrpcService } from "@/grpc/grpc.service";
 import { Algorithm } from "@/grpc/grpc.types";
@@ -9,6 +5,9 @@ import { MetadataService } from "@/metadata/metadata.service";
 import { type Metadata } from "@/metadata/metadata.types";
 import { SigningJobResult, type SigningJobData } from "@/queue/queue.types";
 import { SigningProcessor } from "@/queue/signing.processor";
+import { NotFoundException } from "@nestjs/common";
+import { type Job } from "bullmq";
+import { errAsync, okAsync } from "neverthrow";
 
 // Stored key metadata as it would exist after a successful key-generation job.
 const KEY_METADATA: Metadata = {

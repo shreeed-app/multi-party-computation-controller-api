@@ -1,8 +1,3 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import { NotFoundException } from "@nestjs/common";
-import { Test, type TestingModule } from "@nestjs/testing";
-import { type Job, type Queue } from "bullmq";
-
 import { Message } from "@/common/constants/message";
 import { JobsService } from "@/jobs/jobs.service";
 import {
@@ -12,7 +7,11 @@ import {
   type JobStatusResponse,
 } from "@/jobs/jobs.types";
 import { QueueName } from "@/queue/queue.constants";
-import type { KeyGenerationJobResult } from "@/queue/queue.types";
+import { type KeyGenerationJobResult } from "@/queue/queue.types";
+import { getQueueToken } from "@nestjs/bullmq";
+import { NotFoundException } from "@nestjs/common";
+import { Test, type TestingModule } from "@nestjs/testing";
+import { type Job, type Queue } from "bullmq";
 
 // Interface matching the minimal subset of the BullMQ Job properties accessed
 // by JobsService. Only the fields used in mapJobToResponse are exercised.

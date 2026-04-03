@@ -1,7 +1,6 @@
-import { z } from "zod";
-
 import { ConfigKeySchema } from "@/common/config/config.keys";
 import { Environment } from "@/common/utils/environment";
+import { z } from "zod";
 
 /**
  * Zod schema that validates and coerces all required environment variables.
@@ -34,6 +33,8 @@ const AppConfigSchema = z.object({
   [ConfigKeySchema.REDIS_HOST]: z.string().min(1),
 
   [ConfigKeySchema.REDIS_PORT]: z.coerce.number().int().min(1).max(65535),
+
+  [ConfigKeySchema.LOG_DIRECTORY]: z.string().min(1).default("logs"),
 });
 
 /** TypeScript type inferred from the validated configuration schema. */

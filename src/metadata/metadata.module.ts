@@ -1,6 +1,5 @@
-import { Global, Module } from "@nestjs/common";
-
 import { MetadataService } from "@/metadata/metadata.service";
+import { Global, Module } from "@nestjs/common";
 
 /**
  * Global metadata module.

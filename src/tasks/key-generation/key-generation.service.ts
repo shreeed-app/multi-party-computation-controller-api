@@ -1,8 +1,7 @@
-import { randomUUID } from "crypto";
-
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import { type Queue } from "bullmq";
+import { randomUUID } from "crypto";
 
 import { JobAttempts, QueueName } from "@/queue/queue.constants";
 import { type KeyGenerationJobData } from "@/queue/queue.types";

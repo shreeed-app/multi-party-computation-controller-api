@@ -1,13 +1,12 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import { Test, type TestingModule } from "@nestjs/testing";
-import { type Queue } from "bullmq";
-
 import { JobAttempts, QueueName } from "@/queue/queue.constants";
 import {
   type SigningRequestDto,
   type SigningResponseDto,
 } from "@/tasks/signing/signing.dto";
 import { SigningService } from "@/tasks/signing/signing.service";
+import { getQueueToken } from "@nestjs/bullmq";
+import { Test, type TestingModule } from "@nestjs/testing";
+import { type Queue } from "bullmq";
 
 // Minimal valid DTO reused across all tests.
 const DTO: SigningRequestDto = {

@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger";
 import {
   IsHexadecimal,
   IsNotEmpty,
@@ -5,6 +6,7 @@ import {
   Length,
   Matches,
 } from "class-validator";
+import { v4 } from "uuid";
 
 /**
  * Request body for `POST /signing`.
@@ -18,6 +20,9 @@ class SigningRequestDto {
    * Identifier of the key to sign with. Must match the `keyIdentifier` of a
    * previously completed key-generation job.
    */
+  @ApiProperty({
+    description: "Identifier of a previously generated key.",
+  })
   @IsString()
   @IsNotEmpty()
   @Length(1, 128)
@@ -29,6 +34,9 @@ class SigningRequestDto {
    * hashing is performed by the engine; pass the digest (or raw message)
    * according to the target chain convention.
    */
+  @ApiProperty({
+    description: "Raw bytes to sign, hex-encoded without 0x prefix.",
+  })
   @IsString()
   @IsHexadecimal()
   @IsNotEmpty()
@@ -38,7 +46,10 @@ class SigningRequestDto {
 
 /** Response body for a successful `POST /signing` (202 Accepted). */
 class SigningResponseDto {
-  /** Opaque job identifier; poll `GET /jobs/:jobId` to track progress. */
+  @ApiProperty({
+    description: "Opaque job identifier for status polling.",
+    example: v4(),
+  })
   jobId: string;
 }
 

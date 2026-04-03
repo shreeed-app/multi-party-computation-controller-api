@@ -1,3 +1,10 @@
+import { BearerGuard } from "@/common/auth/bearer.guard";
+import { Endpoint } from "@/common/constants/endpoint";
+import {
+  SigningRequestDto,
+  type SigningResponseDto,
+} from "@/tasks/signing/signing.dto";
+import { SigningService } from "@/tasks/signing/signing.service";
 import {
   Body,
   Controller,
@@ -6,14 +13,12 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-
-import { BearerGuard } from "@/common/auth/bearer.guard";
-import { Endpoint } from "@/common/constants/endpoint";
 import {
-  SigningRequestDto,
-  type SigningResponseDto,
-} from "@/tasks/signing/signing.dto";
-import { SigningService } from "@/tasks/signing/signing.service";
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 
 /**
  * HTTP controller for threshold-signature operations.
@@ -24,6 +29,8 @@ import { SigningService } from "@/tasks/signing/signing.service";
  *
  * All endpoints are protected by {@link BearerGuard}.
  */
+@ApiTags("Signing")
+@ApiBearerAuth()
 @UseGuards(BearerGuard)
 @Controller(Endpoint.SIGNING)
 class SigningController {
@@ -39,6 +46,15 @@ class SigningController {
    */
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: "Enqueue a threshold-signature job." })
+  @ApiResponse({
+    status: HttpStatus.ACCEPTED,
+    description: "Job enqueued successfully.",
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: "Unauthorized.",
+  })
   async enqueueSigning(
     @Body() dto: SigningRequestDto,
   ): Promise<SigningResponseDto> {

@@ -1,0 +1,13 @@
+{
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "readme": "none",
+  "disableSources": false,
+  "navigation": {
+    "includeCategories": true
+  }
+}

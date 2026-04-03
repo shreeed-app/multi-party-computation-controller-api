@@ -1,15 +1,21 @@
-import {
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  UseGuards,
-} from "@nestjs/common";
-
 import { BearerGuard } from "@/common/auth/bearer.guard";
 import { Endpoint } from "@/common/constants/endpoint";
 import { JobsService } from "@/jobs/jobs.service";
 import { type JobStatusResponse } from "@/jobs/jobs.types";
+import {
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 
 /**
  * HTTP controller for job-status polling.
@@ -23,6 +29,8 @@ import { type JobStatusResponse } from "@/jobs/jobs.types";
  *
  * All endpoints are protected by {@link BearerGuard}.
  */
+@ApiTags("Jobs")
+@ApiBearerAuth()
 @UseGuards(BearerGuard)
 @Controller(Endpoint.JOBS)
 class JobsController {
@@ -36,6 +44,13 @@ class JobsController {
    *   result, or error.
    */
   @Get(":jobId")
+  @ApiOperation({ summary: "Get the status of a job." })
+  @ApiResponse({ status: HttpStatus.OK, description: "Job status retrieved." })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: "Unauthorized.",
+  })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: "Job not found." })
   async getJobStatus(
     @Param("jobId", new ParseUUIDPipe()) jobId: string,
   ): Promise<JobStatusResponse> {

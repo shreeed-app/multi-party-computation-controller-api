@@ -25,7 +25,7 @@ import { SigningService } from "@/tasks/signing/signing.service";
 import { getQueueToken } from "@nestjs/bullmq";
 import { type INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import type { Job, Queue } from "bullmq";
+import { type Job, type Queue } from "bullmq";
 import { randomBytes } from "crypto";
 import request, { Response } from "supertest";
 import { type App } from "supertest/types";

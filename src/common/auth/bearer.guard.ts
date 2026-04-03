@@ -1,15 +1,13 @@
-import { timingSafeEqual } from "crypto";
-
+import { AppConfigService } from "@/common/config/config.service";
+import { AuthScheme, Header } from "@/common/constants/header";
+import { Message } from "@/common/constants/message";
 import {
   type CanActivate,
   type ExecutionContext,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
-
-import { AppConfigService } from "@/common/config/config.service";
-import { AuthScheme, Header } from "@/common/constants/header";
-import { Message } from "@/common/constants/message";
+import { timingSafeEqual } from "crypto";
 
 /**
  * HTTP guard that validates the `Authorization: Bearer <token>` header on

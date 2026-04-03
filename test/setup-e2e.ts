@@ -1,6 +1,5 @@
-import { type ZodSafeParseResult } from "zod";
-
 import { type AppConfig, AppConfigSchema } from "@/app.config";
+import { type ZodSafeParseResult } from "zod";
 
 /**
  * Mock the config validation so the app can bootstrap in the e2e test

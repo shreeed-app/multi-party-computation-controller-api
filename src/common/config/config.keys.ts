@@ -30,6 +30,9 @@ const ConfigKeySchema = {
 
   /** Port of the Redis instance. */
   REDIS_PORT: "REDIS_PORT",
+
+  /** Directory where daily log files are written. Defaults to `logs`. */
+  LOG_DIRECTORY: "LOG_DIRECTORY",
 } as const;
 
 /** Union of all valid environment variable name strings. */

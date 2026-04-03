@@ -1,8 +1,7 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
-import Redis from "ioredis";
-
 import { AppConfigService } from "@/common/config/config.service";
 import { type Metadata } from "@/metadata/metadata.types";
+import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import Redis from "ioredis";
 
 /**
  * Redis key prefix used to namespace metadata entries. Prevents collisions

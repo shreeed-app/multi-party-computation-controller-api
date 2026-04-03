@@ -1,15 +1,13 @@
-import { randomUUID } from "crypto";
-
-import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable } from "@nestjs/common";
-import { type Queue } from "bullmq";
-
 import { JobAttempts, QueueName } from "@/queue/queue.constants";
 import { type SigningJobData } from "@/queue/queue.types";
 import {
   type SigningRequestDto,
   type SigningResponseDto,
 } from "@/tasks/signing/signing.dto";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Injectable } from "@nestjs/common";
+import { type Queue } from "bullmq";
+import { randomUUID } from "crypto";
 
 /**
  * Service responsible for enqueuing signing jobs into the BullMQ `signing`

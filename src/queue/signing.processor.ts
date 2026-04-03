@@ -1,8 +1,3 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { type Job } from "bullmq";
-import { Result } from "neverthrow";
-
 import { Message } from "@/common/constants/message";
 import { GrpcService } from "@/grpc/grpc.service";
 import { type SignResponse } from "@/grpc/grpc.types";
@@ -13,6 +8,10 @@ import {
   type SigningJobData,
   type SigningJobResult,
 } from "@/queue/queue.types";
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { type Job } from "bullmq";
+import { Result } from "neverthrow";
 
 /**
  * BullMQ processor for the `signing` queue.
@@ -53,8 +52,9 @@ class SigningProcessor extends WorkerHost {
    * @throws {Error} Wrapping gRPC error details on engine failure.
    */
   async process(job: Job<SigningJobData>): Promise<SigningJobResult> {
-    const metadata: Metadata | null =
-      await this.metadataService.retrieve(job.data.keyIdentifier);
+    const metadata: Metadata | null = await this.metadataService.retrieve(
+      job.data.keyIdentifier,
+    );
 
     if (!metadata) {
       throw new NotFoundException(
