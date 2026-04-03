@@ -36,9 +36,9 @@ const JobTimeout = {
 /**
  * Number of BullMQ job attempts.
  *
- * Both MPC operations are set to a single attempt because the Rust engine does
- * not support resuming a partial protocol session. A failed run must be
- * restarted from scratch via a new job.
+ * Both operations are set to a single attempt because the Rust engine does not
+ * support resuming a partial protocol session. A failed run must be restarted
+ * from scratch via a new job.
  */
 const JobAttempts = {
   SINGLE: 1,

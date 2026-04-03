@@ -20,10 +20,9 @@ const GRPC_PACKAGE_NAME = "engine.v1" as const;
 const GRPC_SERVICE_NAME = "Controller" as const;
 
 /**
- * Absolute path to `engine.proto`, computed from `__dirname` so that it
- * resolves correctly in both the TypeScript source tree (`src/grpc/`) and the
- * compiled output (`dist/grpc/`), where proto assets are copied by the
- * nest-cli pipeline (`assets: [{ include: "proto/**\/*.proto" }]`).
+ * Path to `engine.proto`. Relative to the current working directory, which
+ * must contain a `proto/` folder (project root in dev, `/app` in Docker).
+ * Proto assets are copied by the nest-cli pipeline (`assets` in nest-cli.json).
  */
 const GRPC_PROTO_PATH: string = join("proto", "engine", "v1", "engine.proto");
 

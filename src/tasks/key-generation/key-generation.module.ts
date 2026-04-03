@@ -12,7 +12,7 @@ import { KeyGenerationService } from "@/tasks/key-generation/key-generation.serv
  * Owns both the HTTP layer (controller + service) and the background
  * processing layer (processor) for key-generation operations.
  *
- * Dependencies on `GrpcService` and `KeyMetadataService` are satisfied
+ * Dependencies on `GrpcService` and `MetadataService` are satisfied
  * globally via their respective `@Global()` modules.
  */
 @Module({

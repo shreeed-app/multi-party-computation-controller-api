@@ -35,7 +35,7 @@ const makeJob = (options: MockJobOptions = {}): Job => {
     timestamp = Date.now(),
     processedOn = Date.now() + 1_000,
     finishedOn = Date.now() + 2_000,
-    returnvalue = null,
+    returnvalue = { publicKey: "0x000000", publicKeyPackage: "base64==" },
     failedReason = undefined,
   } = options;
 
@@ -53,12 +53,12 @@ const makeJob = (options: MockJobOptions = {}): Job => {
 
 describe("JobsService", () => {
   let service: JobsService;
-  let keyGenQueue: jest.Mocked<Queue>;
+  let keyGenerationQueue: jest.Mocked<Queue>;
   let signingQueue: jest.Mocked<Queue>;
 
   beforeEach(async () => {
     // Provide only `getJob`; other Queue methods are not exercised here.
-    keyGenQueue = {
+    keyGenerationQueue = {
       getJob: jest.fn(),
     } as unknown as jest.Mocked<Queue>;
 
@@ -71,7 +71,7 @@ describe("JobsService", () => {
         JobsService,
         {
           provide: getQueueToken(QueueName.KEY_GENERATION),
-          useValue: keyGenQueue,
+          useValue: keyGenerationQueue,
         },
         {
           provide: getQueueToken(QueueName.SIGNING),
@@ -88,7 +88,7 @@ describe("JobsService", () => {
       const id: string = "1";
       // The service searches key-generation first; the response type must
       // reflect the queue where the job was found.
-      keyGenQueue.getJob.mockResolvedValue(makeJob({ id }));
+      keyGenerationQueue.getJob.mockResolvedValue(makeJob({ id }));
 
       const response: JobStatusResponse = await service.getJobStatus(id);
 
@@ -99,7 +99,7 @@ describe("JobsService", () => {
     it("Falls back to the signing queue when not found in key-generation.", async () => {
       const id: string = "2";
       // GetJob returning undefined signals "not in this queue".
-      keyGenQueue.getJob.mockResolvedValue(undefined);
+      keyGenerationQueue.getJob.mockResolvedValue(undefined);
       signingQueue.getJob.mockResolvedValue(makeJob({ id }));
 
       const response: JobStatusResponse = await service.getJobStatus(id);
@@ -110,7 +110,7 @@ describe("JobsService", () => {
     it("Does not query the signing queue when the job exists in key-generation.", async () => {
       // Short-circuit: avoid an unnecessary Redis round-trip once the job
       // has already been located in the first queue.
-      keyGenQueue.getJob.mockResolvedValue(makeJob());
+      keyGenerationQueue.getJob.mockResolvedValue(makeJob());
 
       await service.getJobStatus("_");
 
@@ -121,7 +121,7 @@ describe("JobsService", () => {
       const id: string = "ghost";
       // A job that exists in neither queue is treated as unknown; the
       // 404 message includes the jobId so callers can diagnose bad requests.
-      keyGenQueue.getJob.mockResolvedValue(undefined);
+      keyGenerationQueue.getJob.mockResolvedValue(undefined);
       signingQueue.getJob.mockResolvedValue(undefined);
 
       await expect(service.getJobStatus(id)).rejects.toThrow(
@@ -145,7 +145,9 @@ describe("JobsService", () => {
     ])(
       "Maps '%s' → %s.",
       async (bullmqState: BullMQJobState, expectedStatus: JobStatus) => {
-        keyGenQueue.getJob.mockResolvedValue(makeJob({ state: bullmqState }));
+        keyGenerationQueue.getJob.mockResolvedValue(
+          makeJob({ state: bullmqState }),
+        );
 
         const response: JobStatusResponse = await service.getJobStatus("_");
 
@@ -163,7 +165,7 @@ describe("JobsService", () => {
         publicKeyPackage: "base64==",
       };
 
-      keyGenQueue.getJob.mockResolvedValue(
+      keyGenerationQueue.getJob.mockResolvedValue(
         makeJob({ state: BullMQJobState.COMPLETED, returnvalue }),
       );
 
@@ -177,7 +179,7 @@ describe("JobsService", () => {
       const message: string = "Engine error [14]: connection lost.";
       // FailedReason is set by BullMQ from the thrown Error's message after
       // all attempts are exhausted; surface it as-is in the API response.
-      keyGenQueue.getJob.mockResolvedValue(
+      keyGenerationQueue.getJob.mockResolvedValue(
         makeJob({
           state: BullMQJobState.FAILED,
           failedReason: message,
@@ -193,7 +195,7 @@ describe("JobsService", () => {
     it("Has null result and null error for a pending job.", async () => {
       // Neither result nor error is available before the job is processed;
       // both fields must be null so the client knows to keep polling.
-      keyGenQueue.getJob.mockResolvedValue(
+      keyGenerationQueue.getJob.mockResolvedValue(
         makeJob({ state: BullMQJobState.WAITING }),
       );
 
@@ -209,7 +211,7 @@ describe("JobsService", () => {
       // Job.timestamp is the Unix ms epoch set when the job was enqueued;
       // the API surface converts it to ISO-8601 for easier client parsing.
       const timestamp: number = new Date().getTime();
-      keyGenQueue.getJob.mockResolvedValue(makeJob({ timestamp }));
+      keyGenerationQueue.getJob.mockResolvedValue(makeJob({ timestamp }));
 
       const response: JobStatusResponse = await service.getJobStatus("_");
 
@@ -220,7 +222,7 @@ describe("JobsService", () => {
       // FinishedOn takes precedence over processedOn as the last-updated
       // timestamp; it reflects the most recent terminal state transition.
       const finishedOn: number = new Date().getTime();
-      keyGenQueue.getJob.mockResolvedValue(makeJob({ finishedOn }));
+      keyGenerationQueue.getJob.mockResolvedValue(makeJob({ finishedOn }));
 
       const response: JobStatusResponse = await service.getJobStatus("_");
 

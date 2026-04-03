@@ -66,11 +66,11 @@ const mockJob = (options: Options): Job => {
 
 describe("App (e2e)", (): void => {
   let app: INestApplication<App>;
-  let keyGenQueue: jest.Mocked<Pick<Queue, "add" | "getJob">>;
+  let keyGenerationQueue: jest.Mocked<Pick<Queue, "add" | "getJob">>;
   let signingQueue: jest.Mocked<Pick<Queue, "add" | "getJob">>;
 
   beforeAll(async (): Promise<void> => {
-    keyGenQueue = {
+    keyGenerationQueue = {
       add: jest.fn().mockResolvedValue(undefined),
       getJob: jest.fn().mockResolvedValue(undefined),
     };
@@ -97,7 +97,7 @@ describe("App (e2e)", (): void => {
         JobsService,
         {
           provide: getQueueToken(QueueName.KEY_GENERATION),
-          useValue: keyGenQueue,
+          useValue: keyGenerationQueue,
         },
         { provide: getQueueToken(QueueName.SIGNING), useValue: signingQueue },
         {
@@ -125,9 +125,9 @@ describe("App (e2e)", (): void => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    keyGenQueue.add.mockResolvedValue({} as Job);
+    keyGenerationQueue.add.mockResolvedValue({} as Job);
     signingQueue.add.mockResolvedValue({} as Job);
-    keyGenQueue.getJob.mockResolvedValue(undefined);
+    keyGenerationQueue.getJob.mockResolvedValue(undefined);
     signingQueue.getJob.mockResolvedValue(undefined);
   });
 
@@ -205,7 +205,7 @@ describe("App (e2e)", (): void => {
         .send(validBody)
         .expect(202);
 
-      expect(keyGenQueue.add).toHaveBeenCalledWith(
+      expect(keyGenerationQueue.add).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
           keyIdentifier: validBody.keyIdentifier,
@@ -343,7 +343,7 @@ describe("App (e2e)", (): void => {
     });
 
     it(`Returns status=${JobStatus.PENDING} for a waiting ${JobType.KEY_GENERATION} job.`, async (): Promise<void> => {
-      keyGenQueue.getJob.mockResolvedValueOnce(
+      keyGenerationQueue.getJob.mockResolvedValueOnce(
         mockJob({ state: BullMQJobState.WAITING }),
       );
 
@@ -391,7 +391,7 @@ describe("App (e2e)", (): void => {
         publicKeyPackage: "base64==",
       };
 
-      keyGenQueue.getJob.mockResolvedValueOnce(
+      keyGenerationQueue.getJob.mockResolvedValueOnce(
         mockJob({
           state: BullMQJobState.COMPLETED,
           returnvalue: result,
@@ -445,7 +445,7 @@ describe("App (e2e)", (): void => {
         "Protocol aborted.",
       );
 
-      keyGenQueue.getJob.mockResolvedValueOnce(
+      keyGenerationQueue.getJob.mockResolvedValueOnce(
         mockJob({ state: BullMQJobState.FAILED, failedReason }),
       );
 

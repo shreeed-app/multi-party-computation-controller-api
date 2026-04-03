@@ -1,16 +1,16 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import { type Job } from "bullmq";
+import { Result } from "neverthrow";
 
 import { GrpcService } from "@/grpc/grpc.service";
 import { GenerateKeyResponse } from "@/grpc/grpc.types";
-import { KeyMetadataService } from "@/key-metadata/key-metadata.service";
-import { QueueName } from "@/queue/queue.constants";
+import { MetadataService } from "@/metadata/metadata.service";
+import { JobTimeout, QueueName } from "@/queue/queue.constants";
 import {
   type KeyGenerationJobData,
   type KeyGenerationJobResult,
 } from "@/queue/queue.types";
-import { Result } from "neverthrow";
 
 /**
  * BullMQ processor for the `key-generation` queue.
@@ -26,15 +26,17 @@ import { Result } from "neverthrow";
  * in the engine; a retry must run the full key-generation protocol again.
  *
  * **No automatic retry**: `attempts` is set to 1 in the producer because a
- * failed or aborted MPC session cannot be resumed — each attempt must start a
+ * failed or aborted session cannot be resumed — each attempt must start a
  * fresh protocol run.
  */
 @Injectable()
-@Processor(QueueName.KEY_GENERATION)
+@Processor(QueueName.KEY_GENERATION, {
+  lockDuration: JobTimeout.KEY_GENERATION,
+})
 class KeyGenerationProcessor extends WorkerHost {
   constructor(
     private readonly grpcService: GrpcService,
-    private readonly keyMetadataService: KeyMetadataService,
+    private readonly metadataService: MetadataService,
   ) {
     super();
   }
@@ -70,7 +72,7 @@ class KeyGenerationProcessor extends WorkerHost {
 
     // Persist key metadata immediately so the signing processor can retrieve
     // publicKeyPackage without relying on client-side storage.
-    await this.keyMetadataService.store(job.data.keyIdentifier, {
+    await this.metadataService.store(job.data.keyIdentifier, {
       algorithm: job.data.algorithm,
       threshold: job.data.threshold,
       participants: job.data.participants,

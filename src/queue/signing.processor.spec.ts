@@ -5,13 +5,13 @@ import { errAsync, okAsync } from "neverthrow";
 import { Message } from "@/common/constants/message";
 import { GrpcService } from "@/grpc/grpc.service";
 import { Algorithm } from "@/grpc/grpc.types";
-import { KeyMetadataService } from "@/key-metadata/key-metadata.service";
-import { type KeyMetadata } from "@/key-metadata/key-metadata.types";
+import { MetadataService } from "@/metadata/metadata.service";
+import { type Metadata } from "@/metadata/metadata.types";
 import { SigningJobResult, type SigningJobData } from "@/queue/queue.types";
 import { SigningProcessor } from "@/queue/signing.processor";
 
 // Stored key metadata as it would exist after a successful key-generation job.
-const KEY_METADATA: KeyMetadata = {
+const KEY_METADATA: Metadata = {
   algorithm: Algorithm.FROST_ED25519,
   threshold: 2,
   participants: 3,
@@ -39,7 +39,7 @@ const makeJob = (data: SigningJobData): Job<SigningJobData> => {
 describe("SigningProcessor", () => {
   let processor: SigningProcessor;
   let grpcService: jest.Mocked<GrpcService>;
-  let keyMetadataService: jest.Mocked<KeyMetadataService>;
+  let metadataService: jest.Mocked<MetadataService>;
 
   beforeEach(() => {
     // Provide only the methods the processor actually calls so the mock stays
@@ -48,18 +48,18 @@ describe("SigningProcessor", () => {
       sign: jest.fn(),
     } as unknown as jest.Mocked<GrpcService>;
 
-    keyMetadataService = {
+    metadataService = {
       retrieve: jest.fn(),
-    } as unknown as jest.Mocked<KeyMetadataService>;
+    } as unknown as jest.Mocked<MetadataService>;
 
     // WorkerHost has a no-op constructor, safe to instantiate directly.
-    processor = new SigningProcessor(grpcService, keyMetadataService);
+    processor = new SigningProcessor(grpcService, metadataService);
   });
 
   it("Throws NotFoundException when key metadata is absent.", async () => {
     // The signing processor cannot proceed without the publicKeyPackage and
     // algorithm stored during key generation — fail fast with a clear error.
-    keyMetadataService.retrieve.mockResolvedValue(null);
+    metadataService.retrieve.mockResolvedValue(null);
 
     await expect(processor.process(makeJob(JOB_DATA))).rejects.toThrow(
       NotFoundException,
@@ -69,7 +69,7 @@ describe("SigningProcessor", () => {
   it("Calls sign with the correct gRPC request payload.", async () => {
     // The processor must decode the stored base64 publicKeyPackage back to a
     // Buffer, and the hex message back to a Buffer, before forwarding to gRPC.
-    keyMetadataService.retrieve.mockResolvedValue(KEY_METADATA);
+    metadataService.retrieve.mockResolvedValue(KEY_METADATA);
     grpcService.sign.mockReturnValue(
       okAsync({ result: { raw: Buffer.alloc(64, 0xff) } }),
     );
@@ -91,7 +91,7 @@ describe("SigningProcessor", () => {
       // FROST algorithms (Ed25519, Schnorr) return a single 64-byte raw buffer
       // with no recovery id.
       const rawBytes: Buffer = Buffer.alloc(64, 0xff);
-      keyMetadataService.retrieve.mockResolvedValue(KEY_METADATA);
+      metadataService.retrieve.mockResolvedValue(KEY_METADATA);
       grpcService.sign.mockReturnValue(okAsync({ result: { raw: rawBytes } }));
 
       const result: SigningJobResult = await processor.process(
@@ -107,7 +107,7 @@ describe("SigningProcessor", () => {
       // (0–3); the processor must concatenate r‖s into a single hex string.
       const r: Buffer = Buffer.alloc(32, 0x11);
       const s: Buffer = Buffer.alloc(32, 0x22);
-      keyMetadataService.retrieve.mockResolvedValue(KEY_METADATA);
+      metadataService.retrieve.mockResolvedValue(KEY_METADATA);
       grpcService.sign.mockReturnValue(
         okAsync({ result: { ecdsa: { r, s, v: 1 } } }),
       );
@@ -124,7 +124,7 @@ describe("SigningProcessor", () => {
       // An empty result object (neither `raw` nor `ecdsa`) indicates a bug in
       // the engine protocol; surface it as an explicit error rather than
       // silently returning an undefined signature.
-      keyMetadataService.retrieve.mockResolvedValue(KEY_METADATA);
+      metadataService.retrieve.mockResolvedValue(KEY_METADATA);
       grpcService.sign.mockReturnValue(okAsync({ result: {} }));
 
       await expect(processor.process(makeJob(JOB_DATA))).rejects.toThrow(
@@ -137,7 +137,7 @@ describe("SigningProcessor", () => {
     const message: string = "Unavailable.";
     // GrpcService wraps the engine error via formatGrpcError before returning
     // errAsync; the processor re-throws result.error as-is.
-    keyMetadataService.retrieve.mockResolvedValue(KEY_METADATA);
+    metadataService.retrieve.mockResolvedValue(KEY_METADATA);
     grpcService.sign.mockReturnValue(
       errAsync(new Error(Message.ENGINE_ERROR(14, message))),
     );

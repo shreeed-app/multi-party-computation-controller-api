@@ -5,6 +5,6 @@
   "compilerOptions": {
     "webpack": true,
     "deleteOutDir": true,
-    "assets": []
+    "assets": [{ "include": "proto/**/*.proto" }]
   }
 }

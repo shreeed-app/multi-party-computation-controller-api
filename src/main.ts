@@ -33,4 +33,8 @@ const bootstrap = async (): Promise<void> => {
   await app.listen(port);
 };
 
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  // eslint-disable-next-line no-console
+  console.error("Failed to bootstrap application:", error);
+  process.exit(1);
+});

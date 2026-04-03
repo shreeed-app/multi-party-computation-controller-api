@@ -1,11 +1,12 @@
 import { type Algorithm } from "@/grpc/grpc.types";
 
 /**
- * Key metadata persisted in Redis after a successful keygen job. Retrieved by
- * `keyIdentifier` to supply the required parameters to Sign calls.
+ * Key metadata persisted in Redis after a successful key generation job.
+ * Retrieved by `keyIdentifier` to supply the required parameters to Sign
+ * calls.
  */
-type KeyMetadata = {
-  /** MPC algorithm used during key generation. */
+type Metadata = {
+  /** Algorithm used during key generation. */
   readonly algorithm: Algorithm;
 
   /** Threshold used during key generation (t of t-of-n). */
@@ -27,4 +28,4 @@ type KeyMetadata = {
   readonly storedAt: string;
 };
 
-export { type KeyMetadata };
+export { type Metadata };

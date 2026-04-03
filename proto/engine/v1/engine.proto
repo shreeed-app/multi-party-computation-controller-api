@@ -18,7 +18,7 @@ service Controller {
   rpc Abort (AbortRequest) returns (AbortResponse);
 }
 
-/** Supported MPC algorithms. */
+/** Supported algorithms. */
 enum Algorithm {
   ALGORITHM_UNSPECIFIED   = 0;
   FROST_ED25519           = 1;
