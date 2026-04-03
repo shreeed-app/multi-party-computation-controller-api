@@ -6,6 +6,8 @@ on:
       - "Continuous integration"
     types:
       - completed
+    branches:
+      - master
 
 concurrency:
   group: release-${{ github.ref }}
@@ -51,7 +53,9 @@ jobs:
           node-version: 22
 
       - name: Generate SBOM
-        run: npx @cyclonedx/cyclonedx-npm --output-format json --output-file bom.json
+        run:
+          npx @cyclonedx/cyclonedx-npm --output-format json --output-file
+          bom.json
 
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
