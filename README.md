@@ -173,9 +173,9 @@ Authorization: Bearer <token>
 }
 ```
 
-* `JobType`: see [documentation](./docs/enums/jobs_jobs.types.JobType.html) for possible enum values.
-* `JobStatus`: see [documentation](./docs/enums/jobs_jobs.types.JobStatus.html) for possible enum values.
-* `JobResult`: see [documentation](./docs/types/jobs_jobs.types.JobResult.html) for possible result structures.
+* `JobType`: see [documentation](https://shreeed-app.github.io/multi-party-computation-controller-api/enums/jobs_jobs.types.JobType.html) for possible enum values.
+* `JobStatus`: see [documentation](https://shreeed-app.github.io/multi-party-computation-controller-api/enums/jobs_jobs.types.JobStatus.html) for possible enum values.
+* `JobResult`: see [documentation](https://shreeed-app.github.io/multi-party-computation-controller-api/types/jobs_jobs.types.JobResult.html) for possible result structures.
 
 **Error response:** `404 Not Found` - job does not exist.
 

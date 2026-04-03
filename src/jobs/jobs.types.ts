@@ -27,7 +27,6 @@ enum JobType {
   SIGNING = "signing",
 }
 
-// #JobResult
 /** Union of all possible job result payloads. */
 type JobResult = KeyGenerationJobResult | SigningJobResult;
 
