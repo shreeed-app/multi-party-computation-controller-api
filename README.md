@@ -85,3 +85,105 @@ sequenceDiagram
     Client->>HTTP: GET /jobs/:jobId
     HTTP-->>Client: 200 OK { status: "completed", result: { signature } }
 ```
+
+## API Reference
+
+All endpoints require a `Authorization: Bearer <token>` header.
+
+---
+
+### `POST /key-generation`
+
+Enqueues a distributed key-generation job.
+
+**Request:**
+
+```http
+POST /key-generation
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+```json
+{
+  "keyIdentifier": "<key_identifier: string>",
+  "algorithm": "<algorithm: Algorithm>",
+  "threshold": "<threshold: number>",
+  "participants": "<participants: number>"
+}
+```
+
+**Response:** `202 Accepted`
+
+```json
+{
+  "jobId": "<job_id: string[UUIDv4]>"
+}
+```
+
+---
+
+### `POST /signing`
+
+Enqueues a threshold-signature job. Requires a previously completed key-generation for the given `keyIdentifier`.
+
+**Request:**
+
+```http
+POST /signing
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+```json
+{
+  "keyIdentifier": "<key_identifier: string>",
+  "message": "<message: string>"
+}
+```
+
+**Response:** `202 Accepted`
+
+```json
+{
+  "jobId": "<job_id: string[UUIDv4]>"
+}
+```
+
+---
+
+### `GET /jobs/:jobId`
+
+Returns the current status of a job. The `:jobId` must be a valid UUID.
+
+**Request:**
+
+```http
+GET /jobs/<job_id>
+Authorization: Bearer <token>
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "jobId": "<job_id: string[UUIDv4]>",
+  "type": "<job_type: JobType>",
+  "status": "<job_status: JobStatus>",
+  "result": {
+    "publicKey": "<public_key: string>",
+    "publicKeyPackage": "<public_key_package: string>"
+  },
+  "error": "<error: string | null>",
+  "createdAt": "<created_at: string[ISO8601]>",
+  "updatedAt": "<updated_at: string[ISO8601]>"
+}
+```
+
+**Error response:** `404 Not Found` - job does not exist.
+
+```json
+{
+  "message": "<error_message: string>"
+}
+```
