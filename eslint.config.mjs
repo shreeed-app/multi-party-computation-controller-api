@@ -1,4 +1,5 @@
 import { FlatCompat } from "@eslint/eslintrc";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
 import jsdoc from "eslint-plugin-jsdoc";
@@ -25,16 +26,26 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("plugin:prettier/recommended"),
   {
-    ignores: ["node_modules", "artifacts", "cache"],
+    ignores: ["node_modules", "dist", "coverage"],
   },
   {
     files: ["**/*.js", "**/*.ts"],
     languageOptions: {
       parser: tsParser,
-      ecmaVersion: "latest",
-      sourceType: "module",
+      parserOptions: {
+        project: "./tsconfig.json",
+        sourceType: "module",
+      },
+    },
+    settings: {
+      "import/resolver": {
+        typescript: {
+          project: "./tsconfig.json",
+        },
+      },
     },
     plugins: {
+      "@typescript-eslint": tsPlugin,
       import: importPlugin,
       jsdoc: jsdoc,
       "jsx-a11y": jsxA11y,
@@ -44,13 +55,6 @@ const eslintConfig = [
       "simple-import-sort": simpleImportSort,
       "no-relative-import-paths": noRel,
     },
-    settings: {
-      "import/resolver": {
-        typescript: {
-          project: "./tsconfig.json",
-        },
-      },
-    },
     rules: {
       "security/detect-object-injection": "warn",
       "promise/always-return": "warn",
@@ -58,20 +62,7 @@ const eslintConfig = [
       "promise/param-names": "error",
       "promise/catch-or-return": "warn",
       "import/no-unresolved": "error",
-      "import/order": [
-        "warn",
-        {
-          groups: [
-            "builtin",
-            "external",
-            "internal",
-            "parent",
-            "sibling",
-            "index",
-          ],
-          "newlines-between": "always",
-        },
-      ],
+      "import/order": "off",
       "no-restricted-syntax": [
         "error",
         {

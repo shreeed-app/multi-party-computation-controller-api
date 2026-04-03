@@ -1,98 +1,100 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-import { AppConfig } from "@/app.config";
+import { type AppConfig } from "@/app.config";
 import { ConfigKeySchema } from "@/common/config/config.keys";
-import Mode from "@/common/constants/mode";
-import { NodeInfo } from "@/services/node/node.types";
 
+/**
+ * Typed wrapper around NestJS `ConfigService` that exposes individual
+ * configuration values as strongly-typed properties.
+ *
+ * Injecting `AppConfigService` instead of the raw `ConfigService` prevents
+ * scattered `config.get('SOME_KEY')` calls and avoids runtime type surprises.
+ */
 @Injectable()
 class AppConfigService {
   constructor(private readonly config: ConfigService<AppConfig>) {}
 
   /**
-   * Get the signer client common name from the configuration.
+   * TCP port on which the HTTP server listens.
    *
-   * @returns {string | undefined} The signer client common name, if set.
+   * @returns The configured port number; defaults to 3000.
    */
-  public get signerClientCommonName(): string | undefined {
-    return this.config.get<string | undefined>(
-      ConfigKeySchema.SIGNER_CLIENT_COMMON_NAME,
-      {
-        infer: true,
-      },
-    );
-  }
-
-  /**
-   * Get the signer certificate fingerprint from the configuration.
-   *
-   * @returns {string | undefined} The signer certificate fingerprint, if set.
-   */
-  public get signerCertificateFingerprint(): string | undefined {
-    return this.config.get<string | undefined>(
-      ConfigKeySchema.SIGNER_CERTIFICATE_FINGERPRINT,
-      {
-        infer: true,
-      },
-    );
-  }
-
-  /**
-   * Get the application mode from the configuration.
-   *
-   * @returns {typeof Mode} The application mode.
-   */
-  public get appMode(): typeof Mode {
-    return this.config.get<typeof Mode>(ConfigKeySchema.APPLICATION_MODE, {
-      infer: true,
-    });
-  }
-
-  /**
-   * Get the nodes configuration from the configuration.
-   *
-   * @returns {readonly NodeInfo[]} The nodes configuration.
-   */
-  public get nodes(): readonly NodeInfo[] {
+  public get port(): number {
     return (
-      this.config.get<NodeInfo[] | undefined>(ConfigKeySchema.NODES, {
-        infer: true,
-      }) ?? []
+      this.config.get<number>(ConfigKeySchema.PORT, { infer: true }) ?? 3000
     );
   }
 
   /**
-   * Get the Vault host from the configuration.
+   * Bearer token that client backends must present in the `Authorization`
+   * header.
    *
-   * @returns {string | undefined} The Vault host.
+   * @returns The configured client bearer token.
    */
-  public get vaultHost(): string | undefined {
-    return this.config.get<string>(ConfigKeySchema.VAULT_HOST, {
+  public get clientBearerToken(): string {
+    return this.config.get<string>(ConfigKeySchema.CLIENT_BEARER_TOKEN, {
       infer: true,
-    });
+    })!;
   }
 
   /**
-   * Get the Vault port from the configuration.
+   * Hostname or IP address of the Rust controller engine gRPC server.
    *
-   * @returns {number | undefined} The Vault port.
+   * @returns The engine host string.
    */
-  public get vaultPort(): number | undefined {
-    return this.config.get<number>(ConfigKeySchema.VAULT_PORT, {
+  public get rustEngineHost(): string {
+    return this.config.get<string>(ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_HOST, {
       infer: true,
-    });
+    })!;
   }
 
   /**
-   * Get the Vault token from the configuration.
+   * Port of the Rust controller engine gRPC server.
    *
-   * @returns {string | undefined} The Vault token.
+   * @returns The engine port number.
    */
-  public get vaultToken(): string | undefined {
-    return this.config.get<string>(ConfigKeySchema.VAULT_TOKEN, {
+  public get rustEnginePort(): number {
+    return this.config.get<number>(ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_PORT, {
       infer: true,
-    });
+    })!;
+  }
+
+  /**
+   * Bearer token injected into gRPC metadata for every call to the Rust
+   * engine.
+   *
+   * @returns The engine bearer token.
+   */
+  public get rustEngineBearerToken(): string {
+    return this.config.get<string>(
+      ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_BEARER_TOKEN,
+      {
+        infer: true,
+      },
+    )!;
+  }
+
+  /**
+   * Hostname or IP address of the Redis instance.
+   *
+   * @returns The Redis host string.
+   */
+  public get redisHost(): string {
+    return this.config.get<string>(ConfigKeySchema.REDIS_HOST, {
+      infer: true,
+    })!;
+  }
+
+  /**
+   * Port of the Redis instance.
+   *
+   * @returns The Redis port number.
+   */
+  public get redisPort(): number {
+    return this.config.get<number>(ConfigKeySchema.REDIS_PORT, {
+      infer: true,
+    })!;
   }
 }
 

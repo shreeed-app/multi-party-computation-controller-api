@@ -1,25 +1,56 @@
-/** Messages constants used across the application. */
+/**
+ * Centralized human-readable message strings used across the application.
+ * Keeping them here avoids duplicating text in guards, services, and
+ * processors.
+ */
 class Message {
-  public static readonly SHARES_MISMATCH =
-    "Number of shares must match number of nodes.";
-  public static readonly UNKNOWN_NODE_NAME = (nodeName: string) =>
-    `Unknown nodeName: '${nodeName}'.`;
-  public static readonly SHARE_DISTRIBUTION_FAILED =
-    "Failed to distribute shares to all nodes.";
-  public static readonly SHARE_STORAGE_FAILED =
-    "Failed to store key share in Vault.";
-  public static readonly SHARE_RETRIEVAL_FAILED =
-    "Failed to retrieve key share from Vault.";
+  /** Bearer token authentication messages. */
+  public static readonly MISSING_AUTH_HEADER: string =
+    "Missing Authorization header.";
 
-  public static readonly MISSING_MTLS_HEADERS =
-    "Missing mTLS identity headers.";
-  public static readonly INVALID_CLIENT_COMMON_NAME =
-    "Invalid client Common Name.";
-  public static readonly INVALID_CLIENT_CERTIFICATE =
-    "Invalid client certificate.";
+  public static readonly INVALID_AUTH_SCHEME: string =
+    "Authorization header must use the Bearer scheme.";
 
-  public static readonly SIGNING_FAILED = "Signing operation failed.";
+  public static readonly INVALID_BEARER_TOKEN: string =
+    "Invalid Bearer token.";
+
+  /** Job-related messages. */
+  /**
+   * @param {string} jobId - The identifier of the missing job.
+   * @returns {string} A descriptive error message.
+   */
+  public static readonly JOB_NOT_FOUND = (jobId: string): string =>
+    `Job '${jobId}' not found.`;
+
+  /** Key-metadata related messages. */
+  /**
+   * @param {string} keyIdentifier - The identifier whose metadata was not
+   *   found.
+   * @returns {string} A descriptive error message.
+   */
+  public static readonly KEY_METADATA_NOT_FOUND = (
+    keyIdentifier: string,
+  ): string =>
+    `Key metadata for '${keyIdentifier}' not found. ` +
+    `Complete a key-generation operation before signing.`;
+
+  /** Engine error messages. */
+  /**
+   * Formats a gRPC error from the Rust controller engine into a readable
+   * string.
+   *
+   * @param {number} code - GRPC status code (numeric).
+   * @param {string} detail - Error message returned by the engine.
+   * @returns {string} Formatted error string stored in the job's
+   *   `failedReason`.
+   */
+  public static readonly ENGINE_ERROR = (
+    code: number,
+    detail: string,
+  ): string => `Engine error [${code}]: ${detail}`;
+
+  public static readonly EMPTY_SIGNATURE_RESULT: string =
+    "Engine returned an empty signature result.";
 }
 
-export default Message;
 export { Message };

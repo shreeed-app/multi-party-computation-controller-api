@@ -1,22 +1,46 @@
+import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 
-import ConfigKeySchema from "@/common/config/config.keys";
 import { AppConfigModule } from "@/common/config/config.module";
-import Mode from "@/common/constants/mode";
-import { InternalModule } from "@/private/private.module";
-import { PublicModule } from "@/public/public.module";
-import { KeysModule } from "@/services/keys/keys.module";
-import { NodesModule } from "@/services/node/node.module";
+import { AppConfigService } from "@/common/config/config.service";
+import { GrpcModule } from "@/grpc/grpc.module";
+import { JobsModule } from "@/jobs/jobs.module";
+import { KeyMetadataModule } from "@/key-metadata/key-metadata.module";
+import { KeyGenerationModule } from "@/tasks/key-generation/key-generation.module";
+import { SigningModule } from "@/tasks/signing/signing.module";
 
-const mode: Mode | undefined = process.env[
-  ConfigKeySchema.APPLICATION_MODE
-] as Mode | undefined;
-
+/**
+ * Root application module.
+ *
+ * Module loading order:
+ *
+ * 1. `AppConfigModule` — global config and env validation (must be first).
+ * 2. `BullModule.forRootAsync` — sets up the shared BullMQ Redis connection.
+ * 3. `GrpcModule` — global gRPC client for the Rust controller engine.
+ * 4. `KeyMetadataModule` — global key-metadata Redis store.
+ * 5. Feature modules (`KeyGenerationModule`, `SigningModule`, `JobsModule`).
+ */
 @Module({
   imports: [
     AppConfigModule,
-    ...(mode === Mode.Bootstrap ? [PublicModule, NodesModule] : []),
-    ...(mode === Mode.Peer ? [InternalModule, KeysModule] : []),
+
+    BullModule.forRootAsync({
+      inject: [AppConfigService],
+      useFactory: (configService: AppConfigService) => ({
+        connection: {
+          host: configService.redisHost,
+          port: configService.redisPort,
+          family: 4,
+        },
+      }),
+    }),
+
+    GrpcModule,
+    KeyMetadataModule,
+
+    KeyGenerationModule,
+    SigningModule,
+    JobsModule,
   ],
 })
 class AppModule {}

@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package engine.v1;
+
+/**
+ * Service exposed by the Rust controller engine and consumed by the NestJS
+ * Worker. The NestJS layer never implements this service — it only acts as a
+ * client.
+ */
+service Controller {
+  /**
+   * Runs the distributed key-generation protocol across all configured nodes.
+   */
+  rpc GenerateKey (GenerateKeyRequest) returns (GenerateKeyResponse);
+  /** Runs the threshold-signature protocol across a quorum of nodes. */
+  rpc Sign (SignRequest) returns (SignResponse);
+  /** Cancels an in-progress protocol session by its identifier. */
+  rpc Abort (AbortRequest) returns (AbortResponse);
+}
+
+/** Supported MPC algorithms. */
+enum Algorithm {
+  ALGORITHM_UNSPECIFIED   = 0;
+  FROST_ED25519           = 1;
+  FROST_SCHNORR_SECP256K1 = 2;
+  CGGMP24_ECDSA_SECP256K1 = 3;
+}
+
+message GenerateKeyRequest {
+  /** Stable, application-assigned identifier for this key. */
+  string key_identifier = 1;
+  /** Algorithm to use for distributed key generation. */
+  Algorithm algorithm = 2;
+  /** Minimum number of participants required to produce a valid signature. */
+  uint32 threshold = 3;
+  /** Total number of nodes participating in the protocol (n of t-of-n). */
+  uint32 participants = 4;
+}
+
+/**
+ * Response from GenerateKey, containing the public key and opaque session
+ * state.
+ */
+message GenerateKeyResponse {
+  /**
+   * Canonical public key bytes.
+   * - secp256k1 compressed: 33 bytes
+   * - ed25519: 32 bytes
+   */
+  bytes public_key = 1;
+  /**
+   * Opaque protocol-internal serialization of the public key package.
+   * Must be stored verbatim and passed back to every subsequent Sign call.
+   * Never parse or transform this value.
+   */
+  bytes public_key_package = 2;
+}
+
+/**
+ * Request for the Sign RPC, containing all information necessary to
+ * reconstruct the signing session state and produce a signature share.
+ */
+message SignRequest {
+  /** Must match the key_identifier used during GenerateKey. */
+  string key_identifier = 1;
+  /**
+   * Exactly the public_key_package bytes returned by the matching GenerateKey
+   * call. The engine uses this to reconstruct the signing session state.
+   */
+  bytes public_key_package = 2;
+  /** Must match the algorithm used during GenerateKey. */
+  Algorithm algorithm = 3;
+  /** Must match the threshold used during GenerateKey. */
+  uint32 threshold = 4;
+  /** Must match the participants count used during GenerateKey. */
+  uint32 participants = 5;
+  /**
+   * Raw bytes to sign.  No digest pre-hashing is performed by the engine;
+   * pass the digest (or message) according to the target chain convention.
+   */
+  bytes message = 6;
+}
+
+/**
+ * Response from Sign, containing the signature share produced by this node.
+ * The client must collect shares from a quorum of nodes and combine them
+ * according to the target chain convention to produce a valid signature.
+ */
+message SignResponse {
+  SignatureResult result = 1;
+}
+
+/**
+ * Signature result returned by Sign. The exact format depends on the algorithm:
+ * - FROST algorithms return 64 raw bytes (r ‖ s).
+ * - CGGMP24/ECDSA returns r, s, and recovery id separately.
+ */
+message SignatureResult {
+  oneof signature {
+    /** FROST algorithms: 64 raw bytes (r ‖ s). */
+    bytes raw = 1;
+    /** CGGMP24/ECDSA: r, s, and recovery id returned separately. */
+    EcdsaSignature ecdsa = 2;
+  }
+}
+
+/**
+ * Separate r, s, and recovery id fields for CGGMP24/ECDSA signatures. The
+ * recovery id is an integer from 0 to 3 that allows reconstructing the full
+ * signature from r and s.
+ */
+message EcdsaSignature {
+  bytes  r = 1; // 32 bytes big-endian.
+  bytes  s = 2; // 32 bytes big-endian.
+  uint32 v = 3; // Recovery id: 0–3.
+}
+
+/**
+ * Request for the Abort RPC, containing the session identifier to cancel.
+ */
+message AbortRequest {
+  /**
+   * UUID of the protocol session to abort.
+   * Sessions expire automatically after 600s if not aborted explicitly.
+   */
+  string session_identifier = 1;
+}
+
+/**
+ * Response from the Abort RPC. Currently empty, but can be extended in the
+ * future to include additional information if needed.
+ */
+message AbortResponse {}
