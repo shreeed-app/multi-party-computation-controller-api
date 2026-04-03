@@ -41,7 +41,7 @@ class AppConfigService {
   /**
    * Current application environment, e.g. "development", "production".
    *
-   * @returns The current environment string.
+   * @returns {string} The current environment string.
    */
   public get environment(): string {
     return this.getRequiredString(ConfigKeySchema.NODE_ENV);
@@ -50,7 +50,7 @@ class AppConfigService {
   /**
    * TCP port on which the HTTP server listens.
    *
-   * @returns The configured port number; defaults to 3000.
+   * @returns {number} The configured port number; defaults to 3000.
    */
   public get port(): number {
     return (
@@ -62,7 +62,7 @@ class AppConfigService {
    * Bearer token that client backends must present in the `Authorization`
    * header.
    *
-   * @returns The configured client bearer token.
+   * @returns {string} The configured client bearer token.
    */
   public get clientBearerToken(): string {
     return this.getRequiredString(ConfigKeySchema.CLIENT_BEARER_TOKEN);
@@ -71,7 +71,7 @@ class AppConfigService {
   /**
    * Hostname or IP address of the Rust controller engine gRPC server.
    *
-   * @returns The engine host string.
+   * @returns {string} The engine host string.
    */
   public get rustEngineHost(): string {
     return this.getRequiredString(ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_HOST);
@@ -80,7 +80,7 @@ class AppConfigService {
   /**
    * Port of the Rust controller engine gRPC server.
    *
-   * @returns The engine port number.
+   * @returns {number} The engine port number.
    */
   public get rustEnginePort(): number {
     return this.getRequiredNumber(ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_PORT);
@@ -90,7 +90,7 @@ class AppConfigService {
    * Bearer token injected into gRPC metadata for every call to the Rust
    * engine.
    *
-   * @returns The engine bearer token.
+   * @returns {string} The engine bearer token.
    */
   public get rustEngineBearerToken(): string {
     return this.getRequiredString(
@@ -101,7 +101,7 @@ class AppConfigService {
   /**
    * Hostname or IP address of the Redis instance.
    *
-   * @returns The Redis host string.
+   * @returns {string} The Redis host string.
    */
   public get redisHost(): string {
     return this.getRequiredString(ConfigKeySchema.REDIS_HOST);
@@ -110,7 +110,7 @@ class AppConfigService {
   /**
    * Port of the Redis instance.
    *
-   * @returns The Redis port number.
+   * @returns {number} The Redis port number.
    */
   public get redisPort(): number {
     return this.getRequiredNumber(ConfigKeySchema.REDIS_PORT);
@@ -119,7 +119,7 @@ class AppConfigService {
   /**
    * Directory where daily log files are written.
    *
-   * @returns The log directory path string. Defaults to "logs".
+   * @returns {string} The log directory path string. Defaults to "logs".
    */
   public get logDirectory(): string {
     return this.getRequiredString(ConfigKeySchema.LOG_DIRECTORY);

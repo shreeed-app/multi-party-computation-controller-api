@@ -24,12 +24,22 @@ import { v4 } from "uuid";
  */
 @ValidatorConstraint({ name: "thresholdWithinParticipants", async: false })
 class ThresholdWithinParticipants implements ValidatorConstraintInterface {
+  /**
+   * @param {number} threshold - The threshold value to validate.
+   * @param {ValidationArguments} args - Context containing the parent DTO.
+   * @returns {boolean} `true` if threshold is within participants or not yet
+   *   parseable.
+   */
   validate(threshold: number, { object }: ValidationArguments): boolean {
     const dto: KeyGenerationRequestDto = object as KeyGenerationRequestDto;
     // If `participants` hasn't been parsed yet, defer to its own validator.
     return dto.participants === undefined || threshold <= dto.participants;
   }
 
+
+  /**
+   * @returns {string} The default validation failure message.
+   */
   defaultMessage({ value }: ValidationArguments): string {
     return `Threshold (${value as number}) must not exceed participants.`;
   }

@@ -2,12 +2,23 @@
   "entryPoints": ["src"],
   "entryPointStrategy": "expand",
   "out": "docs",
-  "excludePrivate": true,
-  "excludeProtected": true,
-  "excludeInternal": true,
+  "excludePrivate": false,
+  "excludeProtected": false,
+  "excludeInternal": false,
   "readme": "none",
   "disableSources": false,
   "navigation": {
     "includeCategories": true
+  },
+  "externalSymbolLinkMappings": {
+    "@types/node": {
+      "\"crypto\".timingSafeEqual": "#"
+    },
+    "@nestjs/common": {
+      "UnauthorizedException": "#"
+    },
+    "@grpc/grpc-js": {
+      "Metadata": "#"
+    }
   }
 }
