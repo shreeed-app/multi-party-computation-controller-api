@@ -45,8 +45,13 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Setup Node.js (for SBOM tool)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Generate SBOM
-        run: bunx @cyclonedx/cyclonedx-npm --output-format json --output-file bom.json
+        run: npx @cyclonedx/cyclonedx-npm --output-format json --output-file bom.json
 
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
