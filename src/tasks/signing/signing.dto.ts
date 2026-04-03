@@ -1,4 +1,10 @@
-import { IsHexadecimal, IsNotEmpty, IsString } from "class-validator";
+import {
+  IsHexadecimal,
+  IsNotEmpty,
+  IsString,
+  Length,
+  Matches,
+} from "class-validator";
 
 /**
  * Request body for `POST /signing`.
@@ -14,6 +20,8 @@ class SigningRequestDto {
    */
   @IsString()
   @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9_-]+$/)
   keyIdentifier: string;
 
   /**
@@ -24,6 +32,7 @@ class SigningRequestDto {
   @IsString()
   @IsHexadecimal()
   @IsNotEmpty()
+  @Length(2)
   message: string;
 }
 

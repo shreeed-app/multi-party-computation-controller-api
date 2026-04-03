@@ -1,18 +1,18 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { type Job } from "bullmq";
+import { Result } from "neverthrow";
 
 import { Message } from "@/common/constants/message";
 import { GrpcService } from "@/grpc/grpc.service";
 import { type SignResponse } from "@/grpc/grpc.types";
-import { KeyMetadataService } from "@/key-metadata/key-metadata.service";
-import { type KeyMetadata } from "@/key-metadata/key-metadata.types";
-import { QueueName } from "@/queue/queue.constants";
+import { MetadataService } from "@/metadata/metadata.service";
+import { type Metadata } from "@/metadata/metadata.types";
+import { JobTimeout, QueueName } from "@/queue/queue.constants";
 import {
   type SigningJobData,
   type SigningJobResult,
 } from "@/queue/queue.types";
-import { Result } from "neverthrow";
 
 /**
  * BullMQ processor for the `signing` queue.
@@ -31,11 +31,11 @@ import { Result } from "neverthrow";
  * set to 1 at the producer level.
  */
 @Injectable()
-@Processor(QueueName.SIGNING)
+@Processor(QueueName.SIGNING, { lockDuration: JobTimeout.SIGNING })
 class SigningProcessor extends WorkerHost {
   constructor(
     private readonly grpcService: GrpcService,
-    private readonly keyMetadataService: KeyMetadataService,
+    private readonly metadataService: MetadataService,
   ) {
     super();
   }
@@ -53,10 +53,10 @@ class SigningProcessor extends WorkerHost {
    * @throws {Error} Wrapping gRPC error details on engine failure.
    */
   async process(job: Job<SigningJobData>): Promise<SigningJobResult> {
-    const keyMetadata: KeyMetadata | null =
-      await this.keyMetadataService.retrieve(job.data.keyIdentifier);
+    const metadata: Metadata | null =
+      await this.metadataService.retrieve(job.data.keyIdentifier);
 
-    if (!keyMetadata) {
+    if (!metadata) {
       throw new NotFoundException(
         Message.KEY_METADATA_NOT_FOUND(job.data.keyIdentifier),
       );
@@ -64,10 +64,10 @@ class SigningProcessor extends WorkerHost {
 
     const result: Result<SignResponse, Error> = await this.grpcService.sign({
       keyIdentifier: job.data.keyIdentifier,
-      publicKeyPackage: Buffer.from(keyMetadata.publicKeyPackage, "base64"),
-      algorithm: keyMetadata.algorithm,
-      threshold: keyMetadata.threshold,
-      participants: keyMetadata.participants,
+      publicKeyPackage: Buffer.from(metadata.publicKeyPackage, "base64"),
+      algorithm: metadata.algorithm,
+      threshold: metadata.threshold,
+      participants: metadata.participants,
       message: Buffer.from(job.data.message, "hex"),
     });
 

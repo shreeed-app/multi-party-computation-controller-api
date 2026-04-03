@@ -8,7 +8,7 @@ type KeyGenerationJobData = {
   /** Stable application-assigned key identifier. */
   readonly keyIdentifier: string;
 
-  /** MPC algorithm to use. */
+  /** Algorithm to use. */
   readonly algorithm: Algorithm;
 
   /** Minimum participants required to produce a valid signature. */

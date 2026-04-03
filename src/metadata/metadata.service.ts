@@ -2,23 +2,23 @@ import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import Redis from "ioredis";
 
 import { AppConfigService } from "@/common/config/config.service";
-import { type KeyMetadata } from "@/key-metadata/key-metadata.types";
+import { type Metadata } from "@/metadata/metadata.types";
 
 /**
- * Redis key prefix used to namespace key-metadata entries. Prevents collisions
+ * Redis key prefix used to namespace metadata entries. Prevents collisions
  * with BullMQ keys that share the same Redis instance.
  */
-const KEY_METADATA_REDIS_PREFIX = "key-metadata" as const;
+const METADATA_REDIS_PREFIX = "metadata" as const;
 
 /**
- * Time-to-live for key-metadata entries in Redis, in seconds. Set to 30 days;
- * long enough to cover typical key life cycles while preventing unbounded
- * growth for abandoned keys.
+ * Time-to-live for metadata entries in Redis, in seconds. Set to 30 days; long
+ * enough to cover typical key life cycles while preventing unbounded growth
+ * for abandoned keys.
  */
-const KEY_METADATA_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days.
+const METADATA_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days.
 
 /**
- * Persistence service for MPC key metadata.
+ * Persistence service for key metadata.
  *
  * After a successful `GenerateKey` gRPC call, the worker stores the
  * `publicKeyPackage`, `algorithm`, `threshold`, and `participants` values
@@ -28,7 +28,7 @@ const KEY_METADATA_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days.
  * Storage backend: Redis (same instance as BullMQ, separate key namespace).
  */
 @Injectable()
-class KeyMetadataService implements OnModuleDestroy {
+class MetadataService implements OnModuleDestroy {
   private readonly redis: Redis;
 
   constructor(private readonly configService: AppConfigService) {
@@ -41,27 +41,31 @@ class KeyMetadataService implements OnModuleDestroy {
       maxRetriesPerRequest: null,
       lazyConnect: false,
     });
+    // Prevent unhandled error events from crashing the process.
+    this.redis.on("error", (error: Error) => {
+      console.error("[MetadataService] Redis error:", error.message);
+    });
   }
 
   /**
-   * Persists key metadata in Redis under `key-metadata:{keyIdentifier}`.
+   * Persists key metadata in Redis under `metadata:{keyIdentifier}`.
    *
-   * Overwrites any existing entry for the same identifier (re-keygen
+   * Overwrites any existing entry for the same identifier (re-key generation
    * scenario). The TTL is reset on each write.
    *
    * @param {string} keyIdentifier - Application-assigned stable key
    *   identifier.
-   * @param {KeyMetadata} metadata - Metadata produced by the key-generation
+   * @param {Metadata} metadata - Metadata produced by the key-generation
    *   processor.
    * @returns {Promise<void>}
    */
-  async store(keyIdentifier: string, metadata: KeyMetadata): Promise<void> {
-    const redisKey: string = `${KEY_METADATA_REDIS_PREFIX}:${keyIdentifier}`;
+  async store(keyIdentifier: string, metadata: Metadata): Promise<void> {
+    const redisKey: string = `${METADATA_REDIS_PREFIX}:${keyIdentifier}`;
     await this.redis.set(
       redisKey,
       JSON.stringify(metadata),
       "EX",
-      KEY_METADATA_TTL_SECONDS,
+      METADATA_TTL_SECONDS,
     );
   }
 
@@ -70,14 +74,22 @@ class KeyMetadataService implements OnModuleDestroy {
    *
    * @param {string} keyIdentifier - Application-assigned stable key
    *   identifier.
-   * @returns {Promise<KeyMetadata | null>} The stored `KeyMetadata`, or `null`
-   *   if not found or expired.
+   * @returns {Promise<Metadata | null>} The stored `Metadata`, or `null` if
+   *   not found or expired.
    */
-  async retrieve(keyIdentifier: string): Promise<KeyMetadata | null> {
-    const redisKey: string = `${KEY_METADATA_REDIS_PREFIX}:${keyIdentifier}`;
+  async retrieve(keyIdentifier: string): Promise<Metadata | null> {
+    const redisKey: string = `${METADATA_REDIS_PREFIX}:${keyIdentifier}`;
     const serialized: string | null = await this.redis.get(redisKey);
     if (!serialized) return null;
-    return JSON.parse(serialized) as KeyMetadata;
+
+    try {
+      return JSON.parse(serialized) as Metadata;
+    } catch {
+      throw new Error(
+        `Corrupted metadata for '${keyIdentifier}'. ` +
+          `Delete and re-run key generation.`,
+      );
+    }
   }
 
   /**
@@ -92,4 +104,4 @@ class KeyMetadataService implements OnModuleDestroy {
   }
 }
 
-export { KeyMetadataService };
+export { MetadataService };

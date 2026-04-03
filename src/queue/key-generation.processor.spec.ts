@@ -4,7 +4,7 @@ import { errAsync, okAsync } from "neverthrow";
 import { Message } from "@/common/constants/message";
 import { GrpcService } from "@/grpc/grpc.service";
 import { Algorithm } from "@/grpc/grpc.types";
-import { KeyMetadataService } from "@/key-metadata/key-metadata.service";
+import { MetadataService } from "@/metadata/metadata.service";
 import { KeyGenerationProcessor } from "@/queue/key-generation.processor";
 import {
   type KeyGenerationJobData,
@@ -32,7 +32,7 @@ const makeJob = (data: KeyGenerationJobData): Job<KeyGenerationJobData> => {
 describe("KeyGenerationProcessor", () => {
   let processor: KeyGenerationProcessor;
   let grpcService: jest.Mocked<GrpcService>;
-  let keyMetadataService: jest.Mocked<KeyMetadataService>;
+  let metadataService: jest.Mocked<MetadataService>;
 
   beforeEach(() => {
     // Provide only the methods the processor actually calls so the mock stays
@@ -41,12 +41,12 @@ describe("KeyGenerationProcessor", () => {
       generateKey: jest.fn(),
     } as unknown as jest.Mocked<GrpcService>;
 
-    keyMetadataService = {
+    metadataService = {
       store: jest.fn().mockResolvedValue(undefined),
-    } as unknown as jest.Mocked<KeyMetadataService>;
+    } as unknown as jest.Mocked<MetadataService>;
 
     // WorkerHost has a no-op constructor, safe to instantiate directly.
-    processor = new KeyGenerationProcessor(grpcService, keyMetadataService);
+    processor = new KeyGenerationProcessor(grpcService, metadataService);
   });
 
   it("Calls generateKey with the correct request payload.", async () => {
@@ -101,7 +101,7 @@ describe("KeyGenerationProcessor", () => {
 
     // The metadata store must be called before the job is marked as completed
     // so that signing jobs queued immediately after can always find the data.
-    expect(keyMetadataService.store).toHaveBeenCalledWith(
+    expect(metadataService.store).toHaveBeenCalledWith(
       JOB_DATA.keyIdentifier,
       expect.objectContaining({
         algorithm: JOB_DATA.algorithm,
@@ -130,6 +130,6 @@ describe("KeyGenerationProcessor", () => {
     );
 
     await expect(processor.process(makeJob(JOB_DATA))).rejects.toThrow();
-    expect(keyMetadataService.store).not.toHaveBeenCalled();
+    expect(metadataService.store).not.toHaveBeenCalled();
   });
 });

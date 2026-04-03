@@ -75,16 +75,35 @@ class JobsService {
       job.finishedOn ?? job.processedOn ?? job.timestamp,
     ).toISOString();
 
+    if (!job.id) throw new Error("Job is missing its identifier.");
+
     return {
-      jobId: job.id!,
+      jobId: job.id,
       type,
       status,
       result:
-        status === JobStatus.COMPLETED ? (job.returnvalue as JobResult) : null,
+        status === JobStatus.COMPLETED
+          ? this.validateJobResult(job.returnvalue)
+          : null,
       error: status === JobStatus.FAILED ? (job.failedReason ?? null) : null,
       createdAt,
       updatedAt,
     };
+  }
+
+  /**
+   * Validates that a job's return value is a plausible `JobResult` before
+   * exposing it through the API.
+   *
+   * @param {unknown} value - The raw `job.returnvalue` from BullMQ.
+   * @returns {JobResult} The validated result.
+   * @throws {Error} When the return value is not a valid object.
+   */
+  private validateJobResult(value: unknown): JobResult {
+    if (typeof value !== "object" || value === null) {
+      throw new Error("Job completed with an invalid result.");
+    }
+    return value as JobResult;
   }
 
   /**

@@ -16,6 +16,32 @@ class AppConfigService {
   constructor(private readonly config: ConfigService<AppConfig>) {}
 
   /**
+   * Retrieves a required string config value, throwing if missing.
+   */
+  private getRequiredString(key: string): string {
+    const value: string | undefined = this.config.get<string>(key, {
+      infer: true,
+    });
+    if (value === undefined || value === null) {
+      throw new Error(`Required config key "${key}" is not set.`);
+    }
+    return value;
+  }
+
+  /**
+   * Retrieves a required number config value, throwing if missing.
+   */
+  private getRequiredNumber(key: string): number {
+    const value: number | undefined = this.config.get<number>(key, {
+      infer: true,
+    });
+    if (value === undefined || value === null) {
+      throw new Error(`Required config key "${key}" is not set.`);
+    }
+    return value;
+  }
+
+  /**
    * TCP port on which the HTTP server listens.
    *
    * @returns The configured port number; defaults to 3000.
@@ -33,9 +59,7 @@ class AppConfigService {
    * @returns The configured client bearer token.
    */
   public get clientBearerToken(): string {
-    return this.config.get<string>(ConfigKeySchema.CLIENT_BEARER_TOKEN, {
-      infer: true,
-    })!;
+    return this.getRequiredString(ConfigKeySchema.CLIENT_BEARER_TOKEN);
   }
 
   /**
@@ -44,9 +68,9 @@ class AppConfigService {
    * @returns The engine host string.
    */
   public get rustEngineHost(): string {
-    return this.config.get<string>(ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_HOST, {
-      infer: true,
-    })!;
+    return this.getRequiredString(
+      ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_HOST,
+    );
   }
 
   /**
@@ -55,9 +79,9 @@ class AppConfigService {
    * @returns The engine port number.
    */
   public get rustEnginePort(): number {
-    return this.config.get<number>(ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_PORT, {
-      infer: true,
-    })!;
+    return this.getRequiredNumber(
+      ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_PORT,
+    );
   }
 
   /**
@@ -67,12 +91,9 @@ class AppConfigService {
    * @returns The engine bearer token.
    */
   public get rustEngineBearerToken(): string {
-    return this.config.get<string>(
+    return this.getRequiredString(
       ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_BEARER_TOKEN,
-      {
-        infer: true,
-      },
-    )!;
+    );
   }
 
   /**
@@ -81,9 +102,7 @@ class AppConfigService {
    * @returns The Redis host string.
    */
   public get redisHost(): string {
-    return this.config.get<string>(ConfigKeySchema.REDIS_HOST, {
-      infer: true,
-    })!;
+    return this.getRequiredString(ConfigKeySchema.REDIS_HOST);
   }
 
   /**
@@ -92,9 +111,7 @@ class AppConfigService {
    * @returns The Redis port number.
    */
   public get redisPort(): number {
-    return this.config.get<number>(ConfigKeySchema.REDIS_PORT, {
-      infer: true,
-    })!;
+    return this.getRequiredNumber(ConfigKeySchema.REDIS_PORT);
   }
 }
 

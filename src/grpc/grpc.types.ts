@@ -2,8 +2,8 @@ import { type Metadata } from "@grpc/grpc-js";
 import { type Observable } from "rxjs";
 
 /**
- * MPC algorithm identifier, mirrors the `Algorithm` proto enum in
- * engine.proto. Use numeric values so they serialize correctly over gRPC.
+ * Algorithm identifier, mirrors the `Algorithm` proto enum in engine.proto.
+ * Use numeric values so they serialize correctly over gRPC.
  */
 enum Algorithm {
   ALGORITHM_UNSPECIFIED = 0,
@@ -20,7 +20,7 @@ interface GenerateKeyRequest {
   /** Stable application-assigned key identifier (e.g. `"wallet-1"`). */
   readonly keyIdentifier: string;
 
-  /** MPC algorithm to use. */
+  /** Algorithm to use. */
   readonly algorithm: Algorithm;
 
   /** Minimum participants required to sign (t of t-of-n). */

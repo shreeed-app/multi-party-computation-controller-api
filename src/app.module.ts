@@ -5,7 +5,7 @@ import { AppConfigModule } from "@/common/config/config.module";
 import { AppConfigService } from "@/common/config/config.service";
 import { GrpcModule } from "@/grpc/grpc.module";
 import { JobsModule } from "@/jobs/jobs.module";
-import { KeyMetadataModule } from "@/key-metadata/key-metadata.module";
+import { MetadataModule } from "@/metadata/metadata.module";
 import { KeyGenerationModule } from "@/tasks/key-generation/key-generation.module";
 import { SigningModule } from "@/tasks/signing/signing.module";
 
@@ -17,7 +17,7 @@ import { SigningModule } from "@/tasks/signing/signing.module";
  * 1. `AppConfigModule` — global config and env validation (must be first).
  * 2. `BullModule.forRootAsync` — sets up the shared BullMQ Redis connection.
  * 3. `GrpcModule` — global gRPC client for the Rust controller engine.
- * 4. `KeyMetadataModule` — global key-metadata Redis store.
+ * 4. `MetadataModule` — global metadata Redis store.
  * 5. Feature modules (`KeyGenerationModule`, `SigningModule`, `JobsModule`).
  */
 @Module({
@@ -36,7 +36,7 @@ import { SigningModule } from "@/tasks/signing/signing.module";
     }),
 
     GrpcModule,
-    KeyMetadataModule,
+    MetadataModule,
 
     KeyGenerationModule,
     SigningModule,

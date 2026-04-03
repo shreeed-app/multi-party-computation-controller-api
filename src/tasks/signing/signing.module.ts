@@ -12,7 +12,7 @@ import { SigningService } from "@/tasks/signing/signing.service";
  * Owns both the HTTP layer (controller + service) and the background
  * processing layer (processor) for signing operations.
  *
- * Dependencies on `GrpcService` and `KeyMetadataService` are satisfied
+ * Dependencies on `GrpcService` and `MetadataService` are satisfied
  * globally via their respective `@Global()` modules.
  */
 @Module({

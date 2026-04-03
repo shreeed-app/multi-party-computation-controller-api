@@ -2,7 +2,10 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsNotIn,
   IsString,
+  Length,
+  Matches,
   Max,
   Min,
   Validate,
@@ -50,16 +53,20 @@ class KeyGenerationRequestDto {
    */
   @IsString()
   @IsNotEmpty()
+  @Length(1, 128)
+  @Matches(/^[a-zA-Z0-9_-]+$/)
   keyIdentifier: string;
 
   /**
-   * MPC algorithm to use for distributed key generation.
+   * Algorithm to use for distributed key generation.
    *
    * - `FROST_ED25519` / `FROST_SCHNORR_SECP256K1`: fast (< 1 s), suitable for
    *   Solana, Bitcoin Schnorr.
    * - `CGGMP24_ECDSA_SECP256K1`: slow (10–60 s+), for Ethereum/EVM.
    */
   @IsEnum(Algorithm)
+  @Validate(ThresholdWithinParticipants)
+  @IsNotIn([Algorithm.ALGORITHM_UNSPECIFIED])
   algorithm: Algorithm;
 
   /**

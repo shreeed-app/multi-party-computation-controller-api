@@ -1,9 +1,3 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import { type INestApplication, ValidationPipe } from "@nestjs/common";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Job, Queue } from "bullmq";
-import request, { Response } from "supertest";
-
 import { AppConfigService } from "@/common/config/config.service";
 import { Endpoint } from "@/common/constants/endpoint";
 import { AuthScheme, Header } from "@/common/constants/header";
@@ -28,8 +22,14 @@ import { KeyGenerationService } from "@/tasks/key-generation/key-generation.serv
 import { SigningController } from "@/tasks/signing/signing.controller";
 import { type SigningRequestDto } from "@/tasks/signing/signing.dto";
 import { SigningService } from "@/tasks/signing/signing.service";
+import { getQueueToken } from "@nestjs/bullmq";
+import { type INestApplication, ValidationPipe } from "@nestjs/common";
+import { Test, type TestingModule } from "@nestjs/testing";
+import type { Job, Queue } from "bullmq";
 import { randomBytes } from "crypto";
+import request, { Response } from "supertest";
 import { type App } from "supertest/types";
+import { v4 } from "uuid";
 
 const TOKEN: string = randomBytes(32).toString("hex");
 const AUTH: string = `${AuthScheme.BEARER_PREFIX} ${TOKEN}`;
@@ -54,7 +54,7 @@ type Options = {
  */
 const mockJob = (options: Options): Job => {
   return {
-    id: options.jobId ?? "id",
+    id: options.jobId ?? v4(),
     getState: jest.fn().mockResolvedValue(options.state),
     returnvalue: options.returnvalue ?? null,
     failedReason: options.failedReason ?? "",
@@ -66,11 +66,11 @@ const mockJob = (options: Options): Job => {
 
 describe("App (e2e)", (): void => {
   let app: INestApplication<App>;
-  let keyGenQueue: jest.Mocked<Pick<Queue, "add" | "getJob">>;
+  let keyGenerationQueue: jest.Mocked<Pick<Queue, "add" | "getJob">>;
   let signingQueue: jest.Mocked<Pick<Queue, "add" | "getJob">>;
 
   beforeAll(async (): Promise<void> => {
-    keyGenQueue = {
+    keyGenerationQueue = {
       add: jest.fn().mockResolvedValue(undefined),
       getJob: jest.fn().mockResolvedValue(undefined),
     };
@@ -97,7 +97,7 @@ describe("App (e2e)", (): void => {
         JobsService,
         {
           provide: getQueueToken(QueueName.KEY_GENERATION),
-          useValue: keyGenQueue,
+          useValue: keyGenerationQueue,
         },
         { provide: getQueueToken(QueueName.SIGNING), useValue: signingQueue },
         {
@@ -125,9 +125,9 @@ describe("App (e2e)", (): void => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    keyGenQueue.add.mockResolvedValue({} as Job);
+    keyGenerationQueue.add.mockResolvedValue({} as Job);
     signingQueue.add.mockResolvedValue({} as Job);
-    keyGenQueue.getJob.mockResolvedValue(undefined);
+    keyGenerationQueue.getJob.mockResolvedValue(undefined);
     signingQueue.getJob.mockResolvedValue(undefined);
   });
 
@@ -205,7 +205,7 @@ describe("App (e2e)", (): void => {
         .send(validBody)
         .expect(202);
 
-      expect(keyGenQueue.add).toHaveBeenCalledWith(
+      expect(keyGenerationQueue.add).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
           keyIdentifier: validBody.keyIdentifier,
@@ -331,23 +331,22 @@ describe("App (e2e)", (): void => {
 
   describe(`GET ${Endpoint.JOBS}/:jobId`, () => {
     it("Returns 404 when the jobId does not exist.", async (): Promise<void> => {
-      const jobId: string = "unknown-id";
+      const jobId: string = v4();
 
       await request(app.getHttpServer())
         .get(`${Endpoint.JOBS}/${jobId}`)
         .set(Header.AUTHORIZATION, AUTH)
         .expect(404)
         .expect(({ body }: BodyResponse) => {
-          expect(body.message).toBe(Message.JOB_NOT_FOUND(`${jobId}`));
+          expect(body.message).toBe(Message.JOB_NOT_FOUND(jobId));
         });
     });
 
     it(`Returns status=${JobStatus.PENDING} for a waiting ${JobType.KEY_GENERATION} job.`, async (): Promise<void> => {
-      keyGenQueue.getJob.mockResolvedValueOnce(
-        mockJob({ state: BullMQJobState.WAITING }),
+      const jobId: string = v4();
+      keyGenerationQueue.getJob.mockResolvedValueOnce(
+        mockJob({ jobId, state: BullMQJobState.WAITING }),
       );
-
-      const jobId: string = "id";
 
       await request(app.getHttpServer())
         .get(`${Endpoint.JOBS}/${jobId}`)
@@ -367,16 +366,18 @@ describe("App (e2e)", (): void => {
     });
 
     it(`Returns status=${JobStatus.PROCESSING} for an active ${JobType.SIGNING} job.`, async (): Promise<void> => {
+      const jobId: string = v4();
       signingQueue.getJob.mockResolvedValueOnce(
-        mockJob({ state: BullMQJobState.ACTIVE }),
+        mockJob({ jobId, state: BullMQJobState.ACTIVE }),
       );
 
       await request(app.getHttpServer())
-        .get(`${Endpoint.JOBS}/id`)
+        .get(`${Endpoint.JOBS}/${jobId}`)
         .set(Header.AUTHORIZATION, AUTH)
         .expect(200)
         .expect(({ body }: { body: JobStatusResponse }) => {
           expect(body).toMatchObject({
+            jobId,
             type: JobType.SIGNING,
             status: JobStatus.PROCESSING,
             result: null,
@@ -386,24 +387,27 @@ describe("App (e2e)", (): void => {
     });
 
     it(`Returns status=${JobStatus.COMPLETED} with result for a finished ${JobType.KEY_GENERATION} job.`, async (): Promise<void> => {
+      const jobId: string = v4();
       const result: KeyGenerationJobResult = {
         publicKey: "0x000000",
         publicKeyPackage: "base64==",
       };
 
-      keyGenQueue.getJob.mockResolvedValueOnce(
+      keyGenerationQueue.getJob.mockResolvedValueOnce(
         mockJob({
+          jobId,
           state: BullMQJobState.COMPLETED,
           returnvalue: result,
         }),
       );
 
       await request(app.getHttpServer())
-        .get(`${Endpoint.JOBS}/id`)
+        .get(`${Endpoint.JOBS}/${jobId}`)
         .set(Header.AUTHORIZATION, AUTH)
         .expect(200)
         .expect(({ body }: { body: JobStatusResponse }) => {
           expect(body).toMatchObject({
+            jobId,
             type: JobType.KEY_GENERATION,
             status: JobStatus.COMPLETED,
             result,
@@ -413,6 +417,7 @@ describe("App (e2e)", (): void => {
     });
 
     it("Returns status=completed with result for a finished signing job.", async (): Promise<void> => {
+      const jobId: string = v4();
       const result: SigningJobResult = {
         signature: "abcdef",
         recoveryId: null,
@@ -420,17 +425,19 @@ describe("App (e2e)", (): void => {
 
       signingQueue.getJob.mockResolvedValueOnce(
         mockJob({
+          jobId,
           state: BullMQJobState.COMPLETED,
           returnvalue: result,
         }),
       );
 
       await request(app.getHttpServer())
-        .get(`${Endpoint.JOBS}/test-id`)
+        .get(`${Endpoint.JOBS}/${jobId}`)
         .set(Header.AUTHORIZATION, AUTH)
         .expect(200)
         .expect(({ body }: { body: JobStatusResponse }) => {
           expect(body).toMatchObject({
+            jobId,
             type: JobType.SIGNING,
             status: JobStatus.COMPLETED,
             result,
@@ -440,21 +447,23 @@ describe("App (e2e)", (): void => {
     });
 
     it("Returns status=failed with error for a failed job.", async (): Promise<void> => {
+      const jobId: string = v4();
       const failedReason: string = Message.ENGINE_ERROR(
         2,
         "Protocol aborted.",
       );
 
-      keyGenQueue.getJob.mockResolvedValueOnce(
-        mockJob({ state: BullMQJobState.FAILED, failedReason }),
+      keyGenerationQueue.getJob.mockResolvedValueOnce(
+        mockJob({ jobId, state: BullMQJobState.FAILED, failedReason }),
       );
 
       await request(app.getHttpServer())
-        .get(`${Endpoint.JOBS}/id`)
+        .get(`${Endpoint.JOBS}/${jobId}`)
         .set(Header.AUTHORIZATION, AUTH)
         .expect(200)
         .expect(({ body }: { body: JobStatusResponse }) => {
           expect(body).toMatchObject({
+            jobId,
             type: JobType.KEY_GENERATION,
             status: JobStatus.FAILED,
             result: null,

@@ -1,4 +1,10 @@
-import { Controller, Get, Param, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  UseGuards,
+} from "@nestjs/common";
 
 import { BearerGuard } from "@/common/auth/bearer.guard";
 import { Endpoint } from "@/common/constants/endpoint";
@@ -31,7 +37,7 @@ class JobsController {
    */
   @Get(":jobId")
   async getJobStatus(
-    @Param("jobId") jobId: string,
+    @Param("jobId", new ParseUUIDPipe()) jobId: string,
   ): Promise<JobStatusResponse> {
     return this.jobsService.getJobStatus(jobId);
   }
