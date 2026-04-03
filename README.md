@@ -166,15 +166,16 @@ Authorization: Bearer <token>
   "jobId": "<job_id: string[UUIDv4]>",
   "type": "<job_type: JobType>",
   "status": "<job_status: JobStatus>",
-  "result": {
-    "publicKey": "<public_key: string>",
-    "publicKeyPackage": "<public_key_package: string>"
-  },
+  "result": "<result: JobResult | null>",
   "error": "<error: string | null>",
   "createdAt": "<created_at: string[ISO8601]>",
   "updatedAt": "<updated_at: string[ISO8601]>"
 }
 ```
+
+* `JobType`: see [documentation](./docs/enums/jobs_jobs.types.JobType.html) for possible enum values.
+* `JobStatus`: see [documentation](./docs/enums/jobs_jobs.types.JobStatus.html) for possible enum values.
+* `JobResult`: see [documentation](./docs/types/jobs_jobs.types.JobResult.html) for possible result structures.
 
 **Error response:** `404 Not Found` - job does not exist.
 

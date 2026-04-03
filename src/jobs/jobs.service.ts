@@ -1,7 +1,3 @@
-import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { type Job, type JobState, type Queue } from "bullmq";
-
 import { Message } from "@/common/constants/message";
 import {
   BullMQJobState,
@@ -11,6 +7,9 @@ import {
   JobType,
 } from "@/jobs/jobs.types";
 import { QueueName } from "@/queue/queue.constants";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { type Job, type JobState, type Queue } from "bullmq";
 
 /**
  * Service for querying the status of enqueued jobs.

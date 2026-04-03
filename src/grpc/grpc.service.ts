@@ -1,9 +1,3 @@
-import { Metadata } from "@grpc/grpc-js";
-import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
-import { type ClientGrpc } from "@nestjs/microservices";
-import { ResultAsync } from "neverthrow";
-import { firstValueFrom } from "rxjs";
-
 import { AppConfigService } from "@/common/config/config.service";
 import { AuthScheme, Header } from "@/common/constants/header";
 import { GRPC_CLIENT_TOKEN, GRPC_SERVICE_NAME } from "@/grpc/grpc.constants";
@@ -16,6 +10,11 @@ import {
   type SignResponse,
 } from "@/grpc/grpc.types";
 import { formatGrpcError } from "@/grpc/grpc.utils";
+import { Metadata } from "@grpc/grpc-js";
+import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
+import { type ClientGrpc } from "@nestjs/microservices";
+import { ResultAsync } from "neverthrow";
+import { firstValueFrom } from "rxjs";
 
 /**
  * Client service for the Rust controller engine gRPC `Controller` service.

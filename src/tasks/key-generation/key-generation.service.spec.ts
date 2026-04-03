@@ -1,7 +1,3 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import { Test, type TestingModule } from "@nestjs/testing";
-import { type Queue } from "bullmq";
-
 import { Algorithm } from "@/grpc/grpc.types";
 import { JobAttempts, QueueName } from "@/queue/queue.constants";
 import {
@@ -9,6 +5,9 @@ import {
   type KeyGenerationResponseDto,
 } from "@/tasks/key-generation/key-generation.dto";
 import { KeyGenerationService } from "@/tasks/key-generation/key-generation.service";
+import { getQueueToken } from "@nestjs/bullmq";
+import { Test, type TestingModule } from "@nestjs/testing";
+import { type Queue } from "bullmq";
 
 // Minimal valid DTO reused across all tests.
 const DTO: KeyGenerationRequestDto = {

@@ -8,7 +8,7 @@ services:
     image: api:latest
     container_name: api
     ports:
-      - "${PORT}:${PORT}"
+      - "${PORT:-3000}:${PORT:-3000}"
     env_file:
       - .env
     depends_on:
@@ -16,6 +16,7 @@ services:
         condition: service_healthy
     volumes:
       - ./config:/app/config:ro
+      - ./logs:/app/logs
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
@@ -30,7 +31,7 @@ services:
     container_name: redis
     command: redis-server --appendonly yes
     ports:
-      - "${REDIS_PORT}:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:

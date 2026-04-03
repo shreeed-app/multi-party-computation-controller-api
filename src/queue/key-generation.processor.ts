@@ -1,8 +1,3 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { Injectable } from "@nestjs/common";
-import { type Job } from "bullmq";
-import { Result } from "neverthrow";
-
 import { GrpcService } from "@/grpc/grpc.service";
 import { GenerateKeyResponse } from "@/grpc/grpc.types";
 import { MetadataService } from "@/metadata/metadata.service";
@@ -11,6 +6,10 @@ import {
   type KeyGenerationJobData,
   type KeyGenerationJobResult,
 } from "@/queue/queue.types";
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Injectable } from "@nestjs/common";
+import { type Job } from "bullmq";
+import { Result } from "neverthrow";
 
 /**
  * BullMQ processor for the `key-generation` queue.

@@ -1,8 +1,7 @@
-import { Global, Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-
 import { AppConfigService } from "@/common/config/config.service";
 import { validate } from "@/common/config/config.validation";
+import { Global, Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 
 /**
  * Global configuration module. Loaded once at startup; its providers

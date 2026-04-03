@@ -1,3 +1,10 @@
+import { BearerGuard } from "@/common/auth/bearer.guard";
+import { Endpoint } from "@/common/constants/endpoint";
+import {
+  KeyGenerationRequestDto,
+  type KeyGenerationResponseDto,
+} from "@/tasks/key-generation/key-generation.dto";
+import { KeyGenerationService } from "@/tasks/key-generation/key-generation.service";
 import {
   Body,
   Controller,
@@ -6,14 +13,12 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-
-import { BearerGuard } from "@/common/auth/bearer.guard";
-import { Endpoint } from "@/common/constants/endpoint";
 import {
-  KeyGenerationRequestDto,
-  type KeyGenerationResponseDto,
-} from "@/tasks/key-generation/key-generation.dto";
-import { KeyGenerationService } from "@/tasks/key-generation/key-generation.service";
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 
 /**
  * HTTP controller for distributed key-generation operations.
@@ -24,6 +29,8 @@ import { KeyGenerationService } from "@/tasks/key-generation/key-generation.serv
  *
  * All endpoints are protected by {@link BearerGuard}.
  */
+@ApiTags("Key generation")
+@ApiBearerAuth()
 @UseGuards(BearerGuard)
 @Controller(Endpoint.KEY_GENERATION)
 class KeyGenerationController {
@@ -39,6 +46,15 @@ class KeyGenerationController {
    */
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: "Enqueue a distributed key-generation job." })
+  @ApiResponse({
+    status: HttpStatus.ACCEPTED,
+    description: "Job enqueued successfully.",
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: "Unauthorized.",
+  })
   async enqueueKeyGeneration(
     @Body() dto: KeyGenerationRequestDto,
   ): Promise<KeyGenerationResponseDto> {

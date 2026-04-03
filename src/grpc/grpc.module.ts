@@ -1,6 +1,3 @@
-import { Global, Module } from "@nestjs/common";
-import { ClientsModule, Transport } from "@nestjs/microservices";
-
 import { AppConfigService } from "@/common/config/config.service";
 import { AddressManager } from "@/common/utils/address-manager";
 import {
@@ -9,6 +6,8 @@ import {
   GRPC_PROTO_PATH,
 } from "@/grpc/grpc.constants";
 import { GrpcService } from "@/grpc/grpc.service";
+import { Global, Module } from "@nestjs/common";
+import { ClientsModule, Transport } from "@nestjs/microservices";
 
 /**
  * Global gRPC module.

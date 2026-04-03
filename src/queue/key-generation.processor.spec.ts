@@ -1,6 +1,3 @@
-import { type Job } from "bullmq";
-import { errAsync, okAsync } from "neverthrow";
-
 import { Message } from "@/common/constants/message";
 import { GrpcService } from "@/grpc/grpc.service";
 import { Algorithm } from "@/grpc/grpc.types";
@@ -10,6 +7,8 @@ import {
   type KeyGenerationJobData,
   type KeyGenerationJobResult,
 } from "@/queue/queue.types";
+import { type Job } from "bullmq";
+import { errAsync, okAsync } from "neverthrow";
 
 // Baseline job payload matching a 2-of-3 FROST Ed25519 key-generation.
 const JOB_DATA: KeyGenerationJobData = {

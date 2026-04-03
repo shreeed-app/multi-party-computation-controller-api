@@ -1,11 +1,9 @@
-import { randomBytes } from "crypto";
-
-import { UnauthorizedException, type ExecutionContext } from "@nestjs/common";
-
 import { BearerGuard } from "@/common/auth/bearer.guard";
 import { AppConfigService } from "@/common/config/config.service";
 import { AuthScheme, Header } from "@/common/constants/header";
 import { Message } from "@/common/constants/message";
+import { UnauthorizedException, type ExecutionContext } from "@nestjs/common";
+import { randomBytes } from "crypto";
 
 // A valid 64-char hex token (32 random bytes). The exact value is
 // irrelevant; what matters is that the guard treats it as the expected token.

@@ -1,8 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-
 import { type AppConfig } from "@/app.config";
 import { ConfigKeySchema } from "@/common/config/config.keys";
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 /**
  * Typed wrapper around NestJS `ConfigService` that exposes individual
@@ -35,10 +34,17 @@ class AppConfigService {
     const value: number | undefined = this.config.get<number>(key, {
       infer: true,
     });
-    if (value === undefined || value === null) {
-      throw new Error(`Required config key "${key}" is not set.`);
-    }
-    return value;
+    if (value !== undefined && value !== null) return value;
+    throw new Error(`Required config key "${key}" is not set.`);
+  }
+
+  /**
+   * Current application environment, e.g. "development", "production".
+   *
+   * @returns The current environment string.
+   */
+  public get environment(): string {
+    return this.getRequiredString(ConfigKeySchema.NODE_ENV);
   }
 
   /**
@@ -68,9 +74,7 @@ class AppConfigService {
    * @returns The engine host string.
    */
   public get rustEngineHost(): string {
-    return this.getRequiredString(
-      ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_HOST,
-    );
+    return this.getRequiredString(ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_HOST);
   }
 
   /**
@@ -79,9 +83,7 @@ class AppConfigService {
    * @returns The engine port number.
    */
   public get rustEnginePort(): number {
-    return this.getRequiredNumber(
-      ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_PORT,
-    );
+    return this.getRequiredNumber(ConfigKeySchema.CRYPTOGRAPHIC_ENGINE_PORT);
   }
 
   /**
@@ -112,6 +114,15 @@ class AppConfigService {
    */
   public get redisPort(): number {
     return this.getRequiredNumber(ConfigKeySchema.REDIS_PORT);
+  }
+
+  /**
+   * Directory where daily log files are written.
+   *
+   * @returns The log directory path string. Defaults to "logs".
+   */
+  public get logDirectory(): string {
+    return this.getRequiredString(ConfigKeySchema.LOG_DIRECTORY);
   }
 }
 

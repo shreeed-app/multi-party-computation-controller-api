@@ -1,6 +1,5 @@
-import z, { type ZodSafeParseResult } from "zod";
-
 import { type AppConfig, AppConfigSchema } from "@/app.config";
+import z, { type ZodSafeParseResult } from "zod";
 
 /**
  * Validates and coerces the raw process environment against `AppConfigSchema`.

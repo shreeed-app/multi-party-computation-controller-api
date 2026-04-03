@@ -22,7 +22,8 @@ const GRPC_SERVICE_NAME = "Controller" as const;
 /**
  * Path to `engine.proto`. Relative to the current working directory, which
  * must contain a `proto/` folder (project root in dev, `/app` in Docker).
- * Proto assets are copied by the nest-cli pipeline (`assets` in nest-cli.json).
+ * Proto assets are copied by the nest-cli pipeline (`assets` in
+ * nest-cli.json).
  */
 const GRPC_PROTO_PATH: string = join("proto", "engine", "v1", "engine.proto");
 

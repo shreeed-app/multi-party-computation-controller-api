@@ -1,9 +1,8 @@
-import { BullModule } from "@nestjs/bullmq";
-import { Module } from "@nestjs/common";
-
 import { JobsController } from "@/jobs/jobs.controller";
 import { JobsService } from "@/jobs/jobs.service";
 import { QueueName } from "@/queue/queue.constants";
+import { BullModule } from "@nestjs/bullmq";
+import { Module } from "@nestjs/common";
 
 /**
  * Feature module for job-status polling.

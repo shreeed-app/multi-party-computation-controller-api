@@ -1,4 +1,4 @@
-import type { AppConfig } from "@/app.config";
+import { type AppConfig } from "@/app.config";
 import { validate } from "@/common/config/config.validation";
 
 // Mapped type to express all env vars as raw strings before Zod coercion.
@@ -17,6 +17,7 @@ const VALID_ENV: StringifiedAppConfig = {
   CRYPTOGRAPHIC_ENGINE_BEARER_TOKEN: "cryptographic-token",
   REDIS_HOST: "localhost",
   REDIS_PORT: "6379",
+  LOG_DIRECTORY: "logs",
 };
 
 describe("Validate (AppConfigSchema)", () => {
