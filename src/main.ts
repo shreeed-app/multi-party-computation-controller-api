@@ -49,6 +49,18 @@ const bootstrap = async (): Promise<void> => {
       .build();
 
     SwaggerModule.setup("api", app, SwaggerModule.createDocument(app, config));
+
+    const logger: Logger = app.get(Logger);
+    await app.listen(configService.port);
+    logger.log(
+      `Swagger UI: http://localhost:${configService.port}/api`,
+      "Bootstrap",
+    );
+    logger.log(
+      `Bearer token: ${configService.clientBearerToken}`,
+      "Bootstrap",
+    );
+    return;
   }
 
   await app.listen(configService.port);

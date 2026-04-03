@@ -19,6 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "docs": "typedoc",
+    "ci": "bun run format && bun run lint && bun run test:coverage && bun run docs && bun run build",
     "act:ci": "act -W .github/workflows/ci.yaml -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:full-latest --container-architecture linux/amd64"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@nestjs/microservices": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/swagger": "^11.2.6",
+    "@nestjs/throttler": "^6.5.0",
     "bullmq": "^5.73.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
@@ -79,8 +81,8 @@
     "ts-loader": "^9.5.7",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typedoc": "^0.28.18",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.58.0",
-    "typedoc": "^0.28.18"
+    "typescript-eslint": "^8.58.0"
   }
 }

@@ -7,7 +7,7 @@ import {
   type KeyGenerationJobResult,
 } from "@/queue/queue.types";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { type Job } from "bullmq";
 import { Result } from "neverthrow";
 
@@ -33,6 +33,8 @@ import { Result } from "neverthrow";
   lockDuration: JobTimeout.KEY_GENERATION,
 })
 class KeyGenerationProcessor extends WorkerHost {
+  private readonly logger: Logger = new Logger(KeyGenerationProcessor.name);
+
   constructor(
     private readonly grpcService: GrpcService,
     private readonly metadataService: MetadataService,
@@ -61,7 +63,13 @@ class KeyGenerationProcessor extends WorkerHost {
         participants: job.data.participants,
       });
 
-    if (result.isErr()) throw result.error;
+    if (result.isErr()) {
+      this.logger.error(
+        `gRPC GenerateKey failed for job ${job.id}: ${result.error.message}`,
+      );
+      throw result.error;
+    }
+
     const publicKey: string = Buffer.from(result.value.publicKey).toString(
       "hex",
     );

@@ -2,16 +2,16 @@ import { Message } from "@/common/constants/message";
 import { GrpcService } from "@/grpc/grpc.service";
 import { type SignResponse } from "@/grpc/grpc.types";
 import { MetadataService } from "@/metadata/metadata.service";
-import { type Metadata } from "@/metadata/metadata.types";
+import { Metadata } from "@/metadata/metadata.types";
 import { JobTimeout, QueueName } from "@/queue/queue.constants";
 import {
   type SigningJobData,
   type SigningJobResult,
 } from "@/queue/queue.types";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { type Job } from "bullmq";
-import { Result } from "neverthrow";
+import { type Result } from "neverthrow";
 
 /**
  * BullMQ processor for the `signing` queue.
@@ -32,6 +32,8 @@ import { Result } from "neverthrow";
 @Injectable()
 @Processor(QueueName.SIGNING, { lockDuration: JobTimeout.SIGNING })
 class SigningProcessor extends WorkerHost {
+  private readonly logger: Logger = new Logger(SigningProcessor.name);
+
   constructor(
     private readonly grpcService: GrpcService,
     private readonly metadataService: MetadataService,
@@ -52,11 +54,21 @@ class SigningProcessor extends WorkerHost {
    * @throws {Error} Wrapping gRPC error details on engine failure.
    */
   async process(job: Job<SigningJobData>): Promise<SigningJobResult> {
-    const metadata: Metadata | null = await this.metadataService.retrieve(
-      job.data.keyIdentifier,
-    );
+    const metadataResult: Result<Metadata | null, Error> =
+      await this.metadataService.retrieve(job.data.keyIdentifier);
 
-    if (!metadata) {
+    if (metadataResult.isErr()) {
+      this.logger.error(
+        `Failed to retrieve key metadata for job ${job.id}:` +
+          `${metadataResult.error.message}`,
+      );
+      throw metadataResult.error;
+    }
+
+    if (!metadataResult.value) {
+      this.logger.error(
+        `Key metadata not found for job ${job.id} — run key generation first.`,
+      );
       throw new NotFoundException(
         Message.KEY_METADATA_NOT_FOUND(job.data.keyIdentifier),
       );
@@ -64,14 +76,22 @@ class SigningProcessor extends WorkerHost {
 
     const result: Result<SignResponse, Error> = await this.grpcService.sign({
       keyIdentifier: job.data.keyIdentifier,
-      publicKeyPackage: Buffer.from(metadata.publicKeyPackage, "base64"),
-      algorithm: metadata.algorithm,
-      threshold: metadata.threshold,
-      participants: metadata.participants,
+      publicKeyPackage: Buffer.from(
+        metadataResult.value.publicKeyPackage,
+        "base64",
+      ),
+      algorithm: metadataResult.value.algorithm,
+      threshold: metadataResult.value.threshold,
+      participants: metadataResult.value.participants,
       message: Buffer.from(job.data.message, "hex"),
     });
 
-    if (result.isErr()) throw result.error;
+    if (result.isErr()) {
+      this.logger.error(
+        `gRPC Sign failed for job ${job.id}: ${result.error.message}`,
+      );
+      throw result.error;
+    }
     return mapSignatureResult(result.value);
   }
 }

@@ -10,6 +10,7 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -34,6 +35,8 @@ import {
 @UseGuards(BearerGuard)
 @Controller(Endpoint.SIGNING)
 class SigningController {
+  private readonly logger: Logger = new Logger(SigningController.name);
+
   constructor(private readonly signingService: SigningService) {}
 
   /**
@@ -55,10 +58,20 @@ class SigningController {
     status: HttpStatus.UNAUTHORIZED,
     description: "Unauthorized.",
   })
+  @ApiResponse({
+    status: 429,
+    description: "Too Many Requests.",
+  })
   async enqueueSigning(
     @Body() dto: SigningRequestDto,
   ): Promise<SigningResponseDto> {
-    return this.signingService.enqueue(dto);
+    this.logger.log(`POST /signing — ${JSON.stringify(dto)}`);
+
+    const result: SigningResponseDto = await this.signingService.enqueue(dto);
+
+    this.logger.log(`Signing job enqueued — ${JSON.stringify(result)}`);
+
+    return result;
   }
 }
 

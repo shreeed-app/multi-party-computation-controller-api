@@ -1,6 +1,7 @@
 import { AppConfigModule } from "@/common/config/config.module";
 import { AppConfigService } from "@/common/config/config.service";
 import { LogLevel } from "@/common/constants/log-level";
+import { IpBearerThrottlerGuard } from "@/common/throttler/throttler.guard";
 import { Environment } from "@/common/utils/environment";
 import { GrpcModule } from "@/grpc/grpc.module";
 import { JobsModule } from "@/jobs/jobs.module";
@@ -9,6 +10,8 @@ import { KeyGenerationModule } from "@/tasks/key-generation/key-generation.modul
 import { SigningModule } from "@/tasks/signing/signing.module";
 import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { LoggerModule, type Params } from "nestjs-pino";
 import { type TransportTargetOptions } from "pino";
 
@@ -26,6 +29,12 @@ import { type TransportTargetOptions } from "pino";
 @Module({
   imports: [
     AppConfigModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     LoggerModule.forRootAsync({
       inject: [AppConfigService],
       useFactory: (configService: AppConfigService): Params => {
@@ -77,6 +86,12 @@ import { type TransportTargetOptions } from "pino";
     KeyGenerationModule,
     SigningModule,
     JobsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: IpBearerThrottlerGuard,
+    },
   ],
 })
 class AppModule {}
