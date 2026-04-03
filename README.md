@@ -88,10 +88,6 @@ sequenceDiagram
 
 ## API Reference
 
-All endpoints require a `Authorization: Bearer <token>` header.
-
----
-
 ### `POST /key-generation`
 
 Enqueues a distributed key-generation job.
